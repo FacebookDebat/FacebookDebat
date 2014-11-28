@@ -1,0 +1,434 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="3.0" xmlns:edmx="http://schemas.microsoft.com/ado/2009/11/edmx">
+  <!-- EF Runtime content -->
+  <edmx:Runtime>
+    <!-- SSDL content -->
+    <edmx:StorageModels>
+    <Schema Namespace="FacebookDebatModel.Store" Provider="System.Data.SqlClient" ProviderManifestToken="2012" Alias="Self" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm/ssdl">
+        <EntityType Name="Comment">
+          <Key>
+            <PropertyRef Name="id" />
+          </Key>
+          <Property Name="id" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="fb_id" Type="varchar" MaxLength="100" Nullable="false" />
+          <Property Name="message" Type="text" Nullable="false" />
+          <Property Name="post_id" Type="int" Nullable="false" />
+          <Property Name="user_id" Type="int" Nullable="false" />
+          <Property Name="date" Type="datetime" />
+          <Property Name="score" Type="float" />
+          <Property Name="scored" Type="bit" Nullable="false" />
+        </EntityType>
+        <EntityType Name="CommentWords">
+          <Key>
+            <PropertyRef Name="id" />
+          </Key>
+          <Property Name="id" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="comment_id" Type="int" Nullable="false" />
+          <Property Name="word_id" Type="int" Nullable="false" />
+        </EntityType>
+        <EntityType Name="Page">
+          <Key>
+            <PropertyRef Name="id" />
+          </Key>
+          <Property Name="id" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="enabled" Type="bit" Nullable="false" />
+          <Property Name="name" Type="varchar" MaxLength="100" Nullable="false" />
+          <Property Name="fb_id" Type="varchar" MaxLength="100" Nullable="false" />
+        </EntityType>
+        <EntityType Name="Post">
+          <Key>
+            <PropertyRef Name="id" />
+          </Key>
+          <Property Name="id" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="fb_id" Type="varchar" MaxLength="200" Nullable="false" />
+          <Property Name="message" Type="text" Nullable="false" />
+          <Property Name="page_id" Type="int" Nullable="false" />
+          <Property Name="date" Type="datetime" />
+          <Property Name="scraped" Type="bit" Nullable="false" />
+        </EntityType>
+        <EntityType Name="User">
+          <Key>
+            <PropertyRef Name="id" />
+          </Key>
+          <Property Name="id" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="fb_id" Type="varchar" MaxLength="50" Nullable="false" />
+          <Property Name="name" Type="varchar" MaxLength="100" Nullable="false" />
+        </EntityType>
+        <EntityType Name="Words">
+          <Key>
+            <PropertyRef Name="id" />
+          </Key>
+          <Property Name="id" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="word" Type="varchar" MaxLength="100" Nullable="false" />
+        </EntityType>
+        <!--Errors Found During Generation:
+warning 6002: The table/view 'FacebookDebat.dbo.BadWords' does not have a primary key defined. The key has been inferred and the definition was created as a read-only table/view.-->
+        <EntityType Name="BadWords">
+          <Key>
+            <PropertyRef Name="id" />
+            <PropertyRef Name="word" />
+          </Key>
+          <Property Name="id" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="word" Type="varchar" MaxLength="100" Nullable="false" />
+        </EntityType>
+        <Association Name="FK_Comment_Post">
+          <End Role="Post" Type="Self.Post" Multiplicity="1" />
+          <End Role="Comment" Type="Self.Comment" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Post">
+              <PropertyRef Name="id" />
+            </Principal>
+            <Dependent Role="Comment">
+              <PropertyRef Name="post_id" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_Comment_User">
+          <End Role="User" Type="Self.User" Multiplicity="1" />
+          <End Role="Comment" Type="Self.Comment" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="User">
+              <PropertyRef Name="id" />
+            </Principal>
+            <Dependent Role="Comment">
+              <PropertyRef Name="user_id" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_CommentWords_Comment">
+          <End Role="Comment" Type="Self.Comment" Multiplicity="1" />
+          <End Role="CommentWords" Type="Self.CommentWords" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Comment">
+              <PropertyRef Name="id" />
+            </Principal>
+            <Dependent Role="CommentWords">
+              <PropertyRef Name="comment_id" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_CommentWords_Words">
+          <End Role="Words" Type="Self.Words" Multiplicity="1" />
+          <End Role="CommentWords" Type="Self.CommentWords" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Words">
+              <PropertyRef Name="id" />
+            </Principal>
+            <Dependent Role="CommentWords">
+              <PropertyRef Name="word_id" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_Post_Page">
+          <End Role="Page" Type="Self.Page" Multiplicity="1" />
+          <End Role="Post" Type="Self.Post" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Page">
+              <PropertyRef Name="id" />
+            </Principal>
+            <Dependent Role="Post">
+              <PropertyRef Name="page_id" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <EntityContainer Name="FacebookDebatModelStoreContainer">
+          <EntitySet Name="Comment" EntityType="Self.Comment" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="CommentWords" EntityType="Self.CommentWords" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="Page" EntityType="Self.Page" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="Post" EntityType="Self.Post" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="User" EntityType="Self.User" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="Words" EntityType="Self.Words" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="BadWords" EntityType="Self.BadWords" store:Type="Views" store:Schema="dbo">
+            <DefiningQuery>SELECT 
+    [BadWords].[id] AS [id], 
+    [BadWords].[word] AS [word]
+    FROM [dbo].[BadWords] AS [BadWords]</DefiningQuery>
+          </EntitySet>
+          <AssociationSet Name="FK_Comment_Post" Association="Self.FK_Comment_Post">
+            <End Role="Post" EntitySet="Post" />
+            <End Role="Comment" EntitySet="Comment" />
+          </AssociationSet>
+          <AssociationSet Name="FK_Comment_User" Association="Self.FK_Comment_User">
+            <End Role="User" EntitySet="User" />
+            <End Role="Comment" EntitySet="Comment" />
+          </AssociationSet>
+          <AssociationSet Name="FK_CommentWords_Comment" Association="Self.FK_CommentWords_Comment">
+            <End Role="Comment" EntitySet="Comment" />
+            <End Role="CommentWords" EntitySet="CommentWords" />
+          </AssociationSet>
+          <AssociationSet Name="FK_CommentWords_Words" Association="Self.FK_CommentWords_Words">
+            <End Role="Words" EntitySet="Words" />
+            <End Role="CommentWords" EntitySet="CommentWords" />
+          </AssociationSet>
+          <AssociationSet Name="FK_Post_Page" Association="Self.FK_Post_Page">
+            <End Role="Page" EntitySet="Page" />
+            <End Role="Post" EntitySet="Post" />
+          </AssociationSet>
+        </EntityContainer>
+      </Schema></edmx:StorageModels>
+    <!-- CSDL content -->
+    <edmx:ConceptualModels>
+      <Schema Namespace="FacebookDebatModel" Alias="Self" annotation:UseStrongSpatialTypes="false" xmlns:annotation="http://schemas.microsoft.com/ado/2009/02/edm/annotation" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm">
+        <EntityContainer Name="FacebookDebatEntities" annotation:LazyLoadingEnabled="true">
+          <EntitySet Name="Comments" EntityType="FacebookDebatModel.Comment" />
+          <EntitySet Name="CommentWords" EntityType="FacebookDebatModel.CommentWord" />
+          <EntitySet Name="Pages" EntityType="FacebookDebatModel.Page" />
+          <EntitySet Name="Posts" EntityType="FacebookDebatModel.Post" />
+          <EntitySet Name="Users" EntityType="FacebookDebatModel.User" />
+          <EntitySet Name="Words" EntityType="FacebookDebatModel.Word" />
+          <EntitySet Name="BadWords" EntityType="FacebookDebatModel.BadWord" />
+          <AssociationSet Name="FK_Comment_Post" Association="FacebookDebatModel.FK_Comment_Post">
+            <End Role="Post" EntitySet="Posts" />
+            <End Role="Comment" EntitySet="Comments" />
+          </AssociationSet>
+          <AssociationSet Name="FK_Comment_User" Association="FacebookDebatModel.FK_Comment_User">
+            <End Role="User" EntitySet="Users" />
+            <End Role="Comment" EntitySet="Comments" />
+          </AssociationSet>
+          <AssociationSet Name="FK_CommentWords_Comment" Association="FacebookDebatModel.FK_CommentWords_Comment">
+            <End Role="Comment" EntitySet="Comments" />
+            <End Role="CommentWord" EntitySet="CommentWords" />
+          </AssociationSet>
+          <AssociationSet Name="FK_CommentWords_Words" Association="FacebookDebatModel.FK_CommentWords_Words">
+            <End Role="Word" EntitySet="Words" />
+            <End Role="CommentWord" EntitySet="CommentWords" />
+          </AssociationSet>
+          <AssociationSet Name="FK_Post_Page" Association="FacebookDebatModel.FK_Post_Page">
+            <End Role="Page" EntitySet="Pages" />
+            <End Role="Post" EntitySet="Posts" />
+          </AssociationSet>
+        </EntityContainer>
+        <EntityType Name="Comment">
+          <Key>
+            <PropertyRef Name="id" />
+          </Key>
+          <Property Name="id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="fb_id" Type="String" Nullable="false" MaxLength="100" FixedLength="false" Unicode="false" />
+          <Property Name="message" Type="String" Nullable="false" MaxLength="Max" FixedLength="false" Unicode="false" />
+          <Property Name="post_id" Type="Int32" Nullable="false" />
+          <Property Name="user_id" Type="Int32" Nullable="false" />
+          <NavigationProperty Name="Post" Relationship="FacebookDebatModel.FK_Comment_Post" FromRole="Comment" ToRole="Post" />
+          <NavigationProperty Name="User" Relationship="FacebookDebatModel.FK_Comment_User" FromRole="Comment" ToRole="User" />
+          <NavigationProperty Name="CommentWords" Relationship="FacebookDebatModel.FK_CommentWords_Comment" FromRole="Comment" ToRole="CommentWord" />
+          <Property Name="score" Type="Double" />
+          <Property Name="scored" Type="Boolean" Nullable="false" />
+          <Property Name="date" Type="DateTime" Precision="3" />
+        </EntityType>
+        <EntityType Name="CommentWord">
+          <Key>
+            <PropertyRef Name="id" />
+          </Key>
+          <Property Name="id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="comment_id" Type="Int32" Nullable="false" />
+          <Property Name="word_id" Type="Int32" Nullable="false" />
+          <NavigationProperty Name="Comment" Relationship="FacebookDebatModel.FK_CommentWords_Comment" FromRole="CommentWord" ToRole="Comment" />
+          <NavigationProperty Name="Word" Relationship="FacebookDebatModel.FK_CommentWords_Words" FromRole="CommentWord" ToRole="Word" />
+        </EntityType>
+        <EntityType Name="Page">
+          <Key>
+            <PropertyRef Name="id" />
+          </Key>
+          <Property Name="id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="enabled" Type="Boolean" Nullable="false" />
+          <Property Name="name" Type="String" Nullable="false" MaxLength="100" FixedLength="false" Unicode="false" />
+          <Property Name="fb_id" Type="String" Nullable="false" MaxLength="100" FixedLength="false" Unicode="false" />
+          <NavigationProperty Name="Posts" Relationship="FacebookDebatModel.FK_Post_Page" FromRole="Page" ToRole="Post" />
+        </EntityType>
+        <EntityType Name="Post">
+          <Key>
+            <PropertyRef Name="id" />
+          </Key>
+          <Property Name="id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="fb_id" Type="String" Nullable="false" MaxLength="200" FixedLength="false" Unicode="false" />
+          <Property Name="message" Type="String" Nullable="false" MaxLength="Max" FixedLength="false" Unicode="false" />
+          <Property Name="page_id" Type="Int32" Nullable="false" />
+          <NavigationProperty Name="Comments" Relationship="FacebookDebatModel.FK_Comment_Post" FromRole="Post" ToRole="Comment" />
+          <NavigationProperty Name="Page" Relationship="FacebookDebatModel.FK_Post_Page" FromRole="Post" ToRole="Page" />
+          <Property Name="date" Type="DateTime" Precision="3" />
+          <Property Name="scraped" Type="Boolean" Nullable="false" />
+        </EntityType>
+        <EntityType Name="User">
+          <Key>
+            <PropertyRef Name="id" />
+          </Key>
+          <Property Name="id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="fb_id" Type="String" Nullable="false" MaxLength="50" FixedLength="false" Unicode="false" />
+          <Property Name="name" Type="String" Nullable="false" MaxLength="100" FixedLength="false" Unicode="false" />
+          <NavigationProperty Name="Comments" Relationship="FacebookDebatModel.FK_Comment_User" FromRole="User" ToRole="Comment" />
+        </EntityType>
+        <EntityType Name="Word">
+          <Key>
+            <PropertyRef Name="id" />
+          </Key>
+          <Property Name="id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="word1" Type="String" Nullable="false" MaxLength="100" FixedLength="false" Unicode="false" />
+          <NavigationProperty Name="CommentWords" Relationship="FacebookDebatModel.FK_CommentWords_Words" FromRole="Word" ToRole="CommentWord" />
+        </EntityType>
+        <EntityType Name="BadWord">
+          <Key>
+            <PropertyRef Name="id" />
+            <PropertyRef Name="word" />
+          </Key>
+          <Property Name="id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="word" Type="String" Nullable="false" MaxLength="100" FixedLength="false" Unicode="false" />
+        </EntityType>
+        <Association Name="FK_Comment_Post">
+          <End Type="FacebookDebatModel.Post" Role="Post" Multiplicity="1" />
+          <End Type="FacebookDebatModel.Comment" Role="Comment" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Post">
+              <PropertyRef Name="id" />
+            </Principal>
+            <Dependent Role="Comment">
+              <PropertyRef Name="post_id" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_Comment_User">
+          <End Type="FacebookDebatModel.User" Role="User" Multiplicity="1" />
+          <End Type="FacebookDebatModel.Comment" Role="Comment" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="User">
+              <PropertyRef Name="id" />
+            </Principal>
+            <Dependent Role="Comment">
+              <PropertyRef Name="user_id" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_CommentWords_Comment">
+          <End Type="FacebookDebatModel.Comment" Role="Comment" Multiplicity="1" />
+          <End Type="FacebookDebatModel.CommentWord" Role="CommentWord" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Comment">
+              <PropertyRef Name="id" />
+            </Principal>
+            <Dependent Role="CommentWord">
+              <PropertyRef Name="comment_id" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_CommentWords_Words">
+          <End Type="FacebookDebatModel.Word" Role="Word" Multiplicity="1" />
+          <End Type="FacebookDebatModel.CommentWord" Role="CommentWord" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Word">
+              <PropertyRef Name="id" />
+            </Principal>
+            <Dependent Role="CommentWord">
+              <PropertyRef Name="word_id" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_Post_Page">
+          <End Type="FacebookDebatModel.Page" Role="Page" Multiplicity="1" />
+          <End Type="FacebookDebatModel.Post" Role="Post" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Page">
+              <PropertyRef Name="id" />
+            </Principal>
+            <Dependent Role="Post">
+              <PropertyRef Name="page_id" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+      </Schema>
+    </edmx:ConceptualModels>
+    <!-- C-S mapping content -->
+    <edmx:Mappings>
+      <Mapping Space="C-S" xmlns="http://schemas.microsoft.com/ado/2009/11/mapping/cs">
+        <EntityContainerMapping StorageEntityContainer="FacebookDebatModelStoreContainer" CdmEntityContainer="FacebookDebatEntities">
+          <EntitySetMapping Name="Comments">
+            <EntityTypeMapping TypeName="FacebookDebatModel.Comment">
+              <MappingFragment StoreEntitySet="Comment">
+                <ScalarProperty Name="date" ColumnName="date" />
+                <ScalarProperty Name="scored" ColumnName="scored" />
+                <ScalarProperty Name="score" ColumnName="score" />
+                <ScalarProperty Name="user_id" ColumnName="user_id" />
+                <ScalarProperty Name="post_id" ColumnName="post_id" />
+                <ScalarProperty Name="message" ColumnName="message" />
+                <ScalarProperty Name="fb_id" ColumnName="fb_id" />
+                <ScalarProperty Name="id" ColumnName="id" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="CommentWords">
+            <EntityTypeMapping TypeName="FacebookDebatModel.CommentWord">
+              <MappingFragment StoreEntitySet="CommentWords">
+                <ScalarProperty Name="word_id" ColumnName="word_id" />
+                <ScalarProperty Name="comment_id" ColumnName="comment_id" />
+                <ScalarProperty Name="id" ColumnName="id" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="Pages">
+            <EntityTypeMapping TypeName="FacebookDebatModel.Page">
+              <MappingFragment StoreEntitySet="Page">
+                <ScalarProperty Name="fb_id" ColumnName="fb_id" />
+                <ScalarProperty Name="name" ColumnName="name" />
+                <ScalarProperty Name="enabled" ColumnName="enabled" />
+                <ScalarProperty Name="id" ColumnName="id" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="Posts">
+            <EntityTypeMapping TypeName="FacebookDebatModel.Post">
+              <MappingFragment StoreEntitySet="Post">
+                <ScalarProperty Name="scraped" ColumnName="scraped" />
+                <ScalarProperty Name="date" ColumnName="date" />
+                <ScalarProperty Name="page_id" ColumnName="page_id" />
+                <ScalarProperty Name="message" ColumnName="message" />
+                <ScalarProperty Name="fb_id" ColumnName="fb_id" />
+                <ScalarProperty Name="id" ColumnName="id" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="Users">
+            <EntityTypeMapping TypeName="FacebookDebatModel.User">
+              <MappingFragment StoreEntitySet="User">
+                <ScalarProperty Name="name" ColumnName="name" />
+                <ScalarProperty Name="fb_id" ColumnName="fb_id" />
+                <ScalarProperty Name="id" ColumnName="id" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="Words">
+            <EntityTypeMapping TypeName="FacebookDebatModel.Word">
+              <MappingFragment StoreEntitySet="Words">
+                <ScalarProperty Name="word1" ColumnName="word" />
+                <ScalarProperty Name="id" ColumnName="id" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="BadWords">
+            <EntityTypeMapping TypeName="FacebookDebatModel.BadWord">
+              <MappingFragment StoreEntitySet="BadWords">
+                <ScalarProperty Name="word" ColumnName="word" />
+                <ScalarProperty Name="id" ColumnName="id" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+        </EntityContainerMapping>
+      </Mapping>
+    </edmx:Mappings>
+  </edmx:Runtime>
+  <!-- EF Designer content (DO NOT EDIT MANUALLY BELOW HERE) -->
+  <Designer xmlns="http://schemas.microsoft.com/ado/2009/11/edmx">
+    <Connection>
+      <DesignerInfoPropertySet>
+        <DesignerProperty Name="MetadataArtifactProcessing" Value="EmbedInOutputAssembly" />
+      </DesignerInfoPropertySet>
+    </Connection>
+    <Options>
+      <DesignerInfoPropertySet>
+        <DesignerProperty Name="ValidateOnBuild" Value="true" />
+        <DesignerProperty Name="EnablePluralization" Value="true" />
+        <DesignerProperty Name="IncludeForeignKeysInModel" Value="true" />
+        <DesignerProperty Name="UseLegacyProvider" Value="false" />
+        <DesignerProperty Name="CodeGenerationStrategy" Value="None" />
+      </DesignerInfoPropertySet>
+    </Options>
+    <!-- Diagram content (shape and connector positions) -->
+    <Diagrams></Diagrams>
+  </Designer>
+</edmx:Edmx>

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="3.0" xmlns:edmx="http://schemas.microsoft.com/ado/2009/11/edmx">
+ <!-- EF Designer content (DO NOT EDIT MANUALLY BELOW HERE) -->
+  <edmx:Designer xmlns="http://schemas.microsoft.com/ado/2009/11/edmx">
+    <!-- Diagram content (shape and connector positions) -->
+    <edmx:Diagrams>
+      <Diagram DiagramId="cb2fce1e1fe1484082e4b4d5f26d702c" Name="Diagram1">
+        <EntityTypeShape EntityType="FacebookDebatModel.Comment" Width="1.5" PointX="5.25" PointY="1.5" />
+        <EntityTypeShape EntityType="FacebookDebatModel.CommentWord" Width="1.5" PointX="7.5" PointY="1.75" />
+        <EntityTypeShape EntityType="FacebookDebatModel.Page" Width="1.5" PointX="0.75" PointY="1.75" />
+        <EntityTypeShape EntityType="FacebookDebatModel.Post" Width="1.5" PointX="3" PointY="1.625" />
+        <EntityTypeShape EntityType="FacebookDebatModel.User" Width="1.5" PointX="3" PointY="5.875" />
+        <EntityTypeShape EntityType="FacebookDebatModel.Word" Width="1.5" PointX="5.25" PointY="5.875" />
+        <EntityTypeShape EntityType="FacebookDebatModel.BadWord" Width="1.5" PointX="7.75" PointY="5.75" />
+        <AssociationConnector Association="FacebookDebatModel.FK_Comment_Post" />
+        <AssociationConnector Association="FacebookDebatModel.FK_Comment_User" />
+        <AssociationConnector Association="FacebookDebatModel.FK_CommentWords_Comment" />
+        <AssociationConnector Association="FacebookDebatModel.FK_CommentWords_Words" />
+        <AssociationConnector Association="FacebookDebatModel.FK_Post_Page" />
+      </Diagram>
+    </edmx:Diagrams>
+  </edmx:Designer>
+</edmx:Edmx>
