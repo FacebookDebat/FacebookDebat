@@ -4,6 +4,8 @@
 Debug/
 Release/
 
+bin/
+
 *.suo
 
 
