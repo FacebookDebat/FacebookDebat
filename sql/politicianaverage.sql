@@ -2,7 +2,6 @@ use FacebookDebat;
 
 select
 	name,
-	count(distinct po.id) as posts,
 	count(distinct c.id) as comments,
 	sum(case when c.score < -2 then 1 else 0 end) as bad_comments
 from FacebookDebat.dbo.Page pa

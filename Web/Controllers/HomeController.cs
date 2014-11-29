@@ -21,5 +21,9 @@ namespace FacebookDebat.Controllers
         {
             return View();
         }
+        public ActionResult Network()
+        {
+            return View();
+        }
     }
 }
