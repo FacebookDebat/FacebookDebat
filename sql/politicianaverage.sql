@@ -1,13 +1,11 @@
 use FacebookDebat;
 
-select name, posts, comments, bad_comments,bad_comments*100/comments as pct, average_score
-from (
-select name,
-	(select count(*) from dbo.Post po where po.page_id = pa.id ) as posts,
-	(select count(*) from dbo.Post po inner join dbo.Comment c on po.id = c.post_id where po.page_id = pa.id ) as comments,
-	(select count(*) from dbo.Post po inner join dbo.Comment c on po.id = c.post_id where po.page_id = pa.id and c.score < -2) as bad_comments,
-	(select avg(score) from dbo.Post po inner join dbo.Comment c on po.id = c.post_id where po.page_id = pa.id ) as average_score
+select
+	name,
+	count(distinct po.id) as posts,
+	count(distinct c.id) as comments,
+	sum(case when c.score < -2 then 1 else 0 end) as bad_comments
 from FacebookDebat.dbo.Page pa
-group by id, name) as a
-where comments > 50
-order by pct desc
+inner join dbo.Post po on po.page_id = pa.id
+inner join dbo.Comment c on po.id = c.post_id
+group by pa.id, pa.name

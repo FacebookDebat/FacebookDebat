@@ -1,0 +1,57 @@
+﻿<div id="container" style="min-width: 310px; height: 400px; max-width: 800px; margin: 0 auto"></div>
+
+<script>
+    $(function () {
+        $.ajax("/Statistics/CommentsPrDate").done(function (d) {
+
+            $('#container').highcharts({
+                chart: {
+                    type: 'area'
+                },
+                title: {
+                    text: 'Facebook kommentarer'
+                },
+
+                xAxis: {
+                    categories: $.map(d, function (x) { return new Date(parseInt(x.date.substr(6))); }),
+                    type: 'datetime',
+                    labels: {
+                        format: '{value:%Y-%m-%d}',
+                        rotation: 45,
+                        align: 'left'
+                    }
+                },
+                yAxis: {
+                    title: {
+                        text: 'Percent'
+                    }
+                },
+                tooltip: {
+                    pointFormat: '<span style="color:{series.color}">{series.name}</span>: <b>{point.percentage:.1f}%</b> ({point.y:,.0f})<br/>',
+                    shared: true
+                },
+                plotOptions: {
+                    area: {
+                        stacking: 'percent',
+                        lineColor: '#ffffff',
+                        lineWidth: 1,
+                        marker: {
+                            lineWidth: 1,
+                            lineColor: '#ffffff'
+                        }
+                    }
+                },
+                series: [{
+                    name: 'Good posts',
+                    data: $.map(d, function (x) { return x.comments }),
+                    color: "#116611"
+        }, {
+                    name: 'Bad posts',
+                    data: $.map(d, function (x) { return x.bad_comments }),
+                    color: "#802215"
+                }]
+            });
+
+        });
+    });
+</script>
