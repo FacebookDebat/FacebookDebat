@@ -1,7 +1,71 @@
-﻿
+﻿@model List<Dictionary<string, object>>
+
 @{
     ViewBag.Title = "Home Page";
 }
 
+<style>
+    thead tr {
+        font-weight: bold;
+    }
+
+    table {
+        font-size: 0.8em;
+    }
+
+    td {
+        padding-left: 4px;
+        padding-bottom: 4px;
+        vertical-align: top;
+    }
+
+    .person {
+        font-weight: bold;
+    }
+
+    tr:nth-child(even) {
+        background: #CCC;
+    }
+
+    tr:nth-child(odd) {
+        background: #FFF;
+    }
+</style>
+@helper Cutoff(string s, int chars)
+{
+    if (s.Length > chars)
+    {
+        @(s.Substring(0, chars).Trim() + "...")
+    }
+    else
+    {
+        @s
+    }
+
+
+}
+<br />
 <table>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>
+                    <center>
+                        @(((DateTime)item["date"]).ToString("HH:mm")) <br /><br />
+                        @(item["score"])
+                    </center>
+                </td>
+                <td>
+                    <div class="person">@item["post_name"]</div>
+                    @Cutoff(item["post"].ToString(), 50)
+                </td>
+                <td>
+                    <div class="person">@item["commenter_name"]</div>
+                    @item["comment"]
+                </td>
+            </tr>
+        }
+        <tr></tr>
+    </tbody>
 </table>

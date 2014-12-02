@@ -1,4 +1,4 @@
-﻿<div id="container" style="min-width: 310px; height: 400px; max-width: 800px; margin: 0 auto"></div>
+﻿<div id="container" style="min-width: 310px; height: 600px; max-width: 800px; margin: 0 auto"></div>
 
 <script>
     $(function () {
@@ -23,7 +23,7 @@
                 },
                 yAxis: {
                     title: {
-                        text: 'Percent'
+                        text: 'Comments'
                     }
                 },
                 tooltip: {
@@ -41,12 +41,20 @@
                         }
                     }
                 },
-                series: [{
-                    name: 'Good posts',
-                    data: $.map(d, function (x) { return x.comments }),
+                series: [ {
+                    name: 'Unclassified comments',
+                    data: $.map(d, function (x) { return x.unclassified_comments }),
+                    color: "#CCC"
+                }, {
+                    name: 'Good comments',
+                    data: $.map(d, function (x) { return x.good_comments }),
                     color: "#116611"
-        }, {
-                    name: 'Bad posts',
+                }, {
+                    name: 'Normal comments',
+                    data: $.map(d, function (x) { return x.normal_comments }),
+                    color: "#FACC2E"
+                }, {
+                    name: 'Bad comments',
                     data: $.map(d, function (x) { return x.bad_comments }),
                     color: "#802215"
                 }]

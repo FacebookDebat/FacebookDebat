@@ -56,9 +56,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Classifier.cs" />
-    <Compile Include="Data\BadWord.cs">
-      <DependentUpon>Database.tt</DependentUpon>
-    </Compile>
+    <Compile Include="DatabaseTools.cs" />
     <Compile Include="Data\Cache.cs" />
     <Compile Include="Data\Comment.cs">
       <DependentUpon>Database.tt</DependentUpon>
@@ -81,13 +79,13 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Database.edmx</DependentUpon>
     </Compile>
-    <Compile Include="Data\Page.cs">
+    <Compile Include="Data\Entity.cs">
       <DependentUpon>Database.tt</DependentUpon>
     </Compile>
     <Compile Include="Data\Post.cs">
       <DependentUpon>Database.tt</DependentUpon>
     </Compile>
-    <Compile Include="Data\User.cs">
+    <Compile Include="Data\Scrapee.cs">
       <DependentUpon>Database.tt</DependentUpon>
     </Compile>
     <Compile Include="Data\Word.cs">

@@ -27,10 +27,9 @@ namespace Common.Data
     
         public virtual DbSet<Comment> Comments { get; set; }
         public virtual DbSet<CommentWord> CommentWords { get; set; }
-        public virtual DbSet<Page> Pages { get; set; }
+        public virtual DbSet<Entity> Entities { get; set; }
         public virtual DbSet<Post> Posts { get; set; }
-        public virtual DbSet<User> Users { get; set; }
+        public virtual DbSet<Scrapee> Scrapees { get; set; }
         public virtual DbSet<Word> Words { get; set; }
-        public virtual DbSet<BadWord> BadWords { get; set; }
     }
 }

@@ -4,19 +4,20 @@
   <edmx:Runtime>
     <!-- SSDL content -->
     <edmx:StorageModels>
-    <Schema Namespace="FacebookDebatModel.Store" Provider="System.Data.SqlClient" ProviderManifestToken="2012" Alias="Self" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm/ssdl">
-        <EntityType Name="Comment">
+    <Schema Namespace="FacebookDebatModel.Store" Provider="System.Data.SqlClient" ProviderManifestToken="2012.Azure" Alias="Self" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm/ssdl">
+        <EntityType Name="Comments">
           <Key>
             <PropertyRef Name="id" />
           </Key>
           <Property Name="id" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
           <Property Name="fb_id" Type="varchar" MaxLength="100" Nullable="false" />
-          <Property Name="message" Type="text" Nullable="false" />
           <Property Name="post_id" Type="int" Nullable="false" />
-          <Property Name="user_id" Type="int" Nullable="false" />
+          <Property Name="entity_id" Type="int" Nullable="false" />
           <Property Name="date" Type="datetime" />
           <Property Name="score" Type="float" />
           <Property Name="scored" Type="bit" Nullable="false" />
+          <Property Name="message" Type="ntext" Nullable="false" />
+          <Property Name="splitted" Type="bit" Nullable="false" />
         </EntityType>
         <EntityType Name="CommentWords">
           <Key>
@@ -26,7 +27,27 @@
           <Property Name="comment_id" Type="int" Nullable="false" />
           <Property Name="word_id" Type="int" Nullable="false" />
         </EntityType>
-        <EntityType Name="Page">
+        <EntityType Name="Entities">
+          <Key>
+            <PropertyRef Name="id" />
+          </Key>
+          <Property Name="id" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="fb_id" Type="varchar" MaxLength="50" Nullable="false" />
+          <Property Name="name" Type="varchar" MaxLength="100" Nullable="false" />
+          <Property Name="isPage" Type="bit" Nullable="false" />
+        </EntityType>
+        <EntityType Name="Posts">
+          <Key>
+            <PropertyRef Name="id" />
+          </Key>
+          <Property Name="id" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="fb_id" Type="varchar" MaxLength="200" Nullable="false" />
+          <Property Name="entity_id" Type="int" Nullable="false" />
+          <Property Name="date" Type="datetime" />
+          <Property Name="scraped" Type="bit" Nullable="false" />
+          <Property Name="message" Type="ntext" Nullable="false" />
+        </EntityType>
+        <EntityType Name="Scrapees">
           <Key>
             <PropertyRef Name="id" />
           </Key>
@@ -34,25 +55,7 @@
           <Property Name="enabled" Type="bit" Nullable="false" />
           <Property Name="name" Type="varchar" MaxLength="100" Nullable="false" />
           <Property Name="fb_id" Type="varchar" MaxLength="100" Nullable="false" />
-        </EntityType>
-        <EntityType Name="Post">
-          <Key>
-            <PropertyRef Name="id" />
-          </Key>
-          <Property Name="id" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
-          <Property Name="fb_id" Type="varchar" MaxLength="200" Nullable="false" />
-          <Property Name="message" Type="text" Nullable="false" />
-          <Property Name="page_id" Type="int" Nullable="false" />
-          <Property Name="date" Type="datetime" />
-          <Property Name="scraped" Type="bit" Nullable="false" />
-        </EntityType>
-        <EntityType Name="User">
-          <Key>
-            <PropertyRef Name="id" />
-          </Key>
-          <Property Name="id" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
-          <Property Name="fb_id" Type="varchar" MaxLength="50" Nullable="false" />
-          <Property Name="name" Type="varchar" MaxLength="100" Nullable="false" />
+          <Property Name="entity_id" Type="int" />
         </EntityType>
         <EntityType Name="Words">
           <Key>
@@ -61,45 +64,47 @@
           <Property Name="id" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
           <Property Name="word" Type="varchar" MaxLength="100" Nullable="false" />
         </EntityType>
-        <!--Errors Found During Generation:
-warning 6002: The table/view 'FacebookDebat.dbo.BadWords' does not have a primary key defined. The key has been inferred and the definition was created as a read-only table/view.-->
-        <EntityType Name="BadWords">
-          <Key>
-            <PropertyRef Name="id" />
-            <PropertyRef Name="word" />
-          </Key>
-          <Property Name="id" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
-          <Property Name="word" Type="varchar" MaxLength="100" Nullable="false" />
-        </EntityType>
-        <Association Name="FK_Comment_Post">
-          <End Role="Post" Type="Self.Post" Multiplicity="1" />
-          <End Role="Comment" Type="Self.Comment" Multiplicity="*" />
+        <Association Name="FK__Scrapees__entity__10566F31">
+          <End Role="Entities" Type="Self.Entities" Multiplicity="0..1" />
+          <End Role="Scrapees" Type="Self.Scrapees" Multiplicity="*" />
           <ReferentialConstraint>
-            <Principal Role="Post">
+            <Principal Role="Entities">
               <PropertyRef Name="id" />
             </Principal>
-            <Dependent Role="Comment">
+            <Dependent Role="Scrapees">
+              <PropertyRef Name="entity_id" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_Comment_Post">
+          <End Role="Posts" Type="Self.Posts" Multiplicity="1" />
+          <End Role="Comments" Type="Self.Comments" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Posts">
+              <PropertyRef Name="id" />
+            </Principal>
+            <Dependent Role="Comments">
               <PropertyRef Name="post_id" />
             </Dependent>
           </ReferentialConstraint>
         </Association>
         <Association Name="FK_Comment_User">
-          <End Role="User" Type="Self.User" Multiplicity="1" />
-          <End Role="Comment" Type="Self.Comment" Multiplicity="*" />
+          <End Role="Entities" Type="Self.Entities" Multiplicity="1" />
+          <End Role="Comments" Type="Self.Comments" Multiplicity="*" />
           <ReferentialConstraint>
-            <Principal Role="User">
+            <Principal Role="Entities">
               <PropertyRef Name="id" />
             </Principal>
-            <Dependent Role="Comment">
-              <PropertyRef Name="user_id" />
+            <Dependent Role="Comments">
+              <PropertyRef Name="entity_id" />
             </Dependent>
           </ReferentialConstraint>
         </Association>
         <Association Name="FK_CommentWords_Comment">
-          <End Role="Comment" Type="Self.Comment" Multiplicity="1" />
+          <End Role="Comments" Type="Self.Comments" Multiplicity="1" />
           <End Role="CommentWords" Type="Self.CommentWords" Multiplicity="*" />
           <ReferentialConstraint>
-            <Principal Role="Comment">
+            <Principal Role="Comments">
               <PropertyRef Name="id" />
             </Principal>
             <Dependent Role="CommentWords">
@@ -119,50 +124,50 @@ warning 6002: The table/view 'FacebookDebat.dbo.BadWords' does not have a primar
             </Dependent>
           </ReferentialConstraint>
         </Association>
-        <Association Name="FK_Post_Page">
-          <End Role="Page" Type="Self.Page" Multiplicity="1" />
-          <End Role="Post" Type="Self.Post" Multiplicity="*" />
+        <Association Name="FK_Entity_Post">
+          <End Role="Entities" Type="Self.Entities" Multiplicity="1">
+            <OnDelete Action="Cascade" />
+          </End>
+          <End Role="Posts" Type="Self.Posts" Multiplicity="*" />
           <ReferentialConstraint>
-            <Principal Role="Page">
+            <Principal Role="Entities">
               <PropertyRef Name="id" />
             </Principal>
-            <Dependent Role="Post">
-              <PropertyRef Name="page_id" />
+            <Dependent Role="Posts">
+              <PropertyRef Name="entity_id" />
             </Dependent>
           </ReferentialConstraint>
         </Association>
         <EntityContainer Name="FacebookDebatModelStoreContainer">
-          <EntitySet Name="Comment" EntityType="Self.Comment" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="Comments" EntityType="Self.Comments" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="CommentWords" EntityType="Self.CommentWords" Schema="dbo" store:Type="Tables" />
-          <EntitySet Name="Page" EntityType="Self.Page" Schema="dbo" store:Type="Tables" />
-          <EntitySet Name="Post" EntityType="Self.Post" Schema="dbo" store:Type="Tables" />
-          <EntitySet Name="User" EntityType="Self.User" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="Entities" EntityType="Self.Entities" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="Posts" EntityType="Self.Posts" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="Scrapees" EntityType="Self.Scrapees" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Words" EntityType="Self.Words" Schema="dbo" store:Type="Tables" />
-          <EntitySet Name="BadWords" EntityType="Self.BadWords" store:Type="Views" store:Schema="dbo">
-            <DefiningQuery>SELECT 
-    [BadWords].[id] AS [id], 
-    [BadWords].[word] AS [word]
-    FROM [dbo].[BadWords] AS [BadWords]</DefiningQuery>
-          </EntitySet>
+          <AssociationSet Name="FK__Scrapees__entity__10566F31" Association="Self.FK__Scrapees__entity__10566F31">
+            <End Role="Entities" EntitySet="Entities" />
+            <End Role="Scrapees" EntitySet="Scrapees" />
+          </AssociationSet>
           <AssociationSet Name="FK_Comment_Post" Association="Self.FK_Comment_Post">
-            <End Role="Post" EntitySet="Post" />
-            <End Role="Comment" EntitySet="Comment" />
+            <End Role="Posts" EntitySet="Posts" />
+            <End Role="Comments" EntitySet="Comments" />
           </AssociationSet>
           <AssociationSet Name="FK_Comment_User" Association="Self.FK_Comment_User">
-            <End Role="User" EntitySet="User" />
-            <End Role="Comment" EntitySet="Comment" />
+            <End Role="Entities" EntitySet="Entities" />
+            <End Role="Comments" EntitySet="Comments" />
           </AssociationSet>
           <AssociationSet Name="FK_CommentWords_Comment" Association="Self.FK_CommentWords_Comment">
-            <End Role="Comment" EntitySet="Comment" />
+            <End Role="Comments" EntitySet="Comments" />
             <End Role="CommentWords" EntitySet="CommentWords" />
           </AssociationSet>
           <AssociationSet Name="FK_CommentWords_Words" Association="Self.FK_CommentWords_Words">
             <End Role="Words" EntitySet="Words" />
             <End Role="CommentWords" EntitySet="CommentWords" />
           </AssociationSet>
-          <AssociationSet Name="FK_Post_Page" Association="Self.FK_Post_Page">
-            <End Role="Page" EntitySet="Page" />
-            <End Role="Post" EntitySet="Post" />
+          <AssociationSet Name="FK_Entity_Post" Association="Self.FK_Entity_Post">
+            <End Role="Entities" EntitySet="Entities" />
+            <End Role="Posts" EntitySet="Posts" />
           </AssociationSet>
         </EntityContainer>
       </Schema></edmx:StorageModels>
@@ -172,17 +177,16 @@ warning 6002: The table/view 'FacebookDebat.dbo.BadWords' does not have a primar
         <EntityContainer Name="FacebookDebatEntities" annotation:LazyLoadingEnabled="true">
           <EntitySet Name="Comments" EntityType="FacebookDebatModel.Comment" />
           <EntitySet Name="CommentWords" EntityType="FacebookDebatModel.CommentWord" />
-          <EntitySet Name="Pages" EntityType="FacebookDebatModel.Page" />
+          <EntitySet Name="Entities" EntityType="FacebookDebatModel.Entity" />
           <EntitySet Name="Posts" EntityType="FacebookDebatModel.Post" />
-          <EntitySet Name="Users" EntityType="FacebookDebatModel.User" />
+          <EntitySet Name="Scrapees" EntityType="FacebookDebatModel.Scrapee" />
           <EntitySet Name="Words" EntityType="FacebookDebatModel.Word" />
-          <EntitySet Name="BadWords" EntityType="FacebookDebatModel.BadWord" />
           <AssociationSet Name="FK_Comment_Post" Association="FacebookDebatModel.FK_Comment_Post">
             <End Role="Post" EntitySet="Posts" />
             <End Role="Comment" EntitySet="Comments" />
           </AssociationSet>
           <AssociationSet Name="FK_Comment_User" Association="FacebookDebatModel.FK_Comment_User">
-            <End Role="User" EntitySet="Users" />
+            <End Role="Entity" EntitySet="Entities" />
             <End Role="Comment" EntitySet="Comments" />
           </AssociationSet>
           <AssociationSet Name="FK_CommentWords_Comment" Association="FacebookDebatModel.FK_CommentWords_Comment">
@@ -193,8 +197,12 @@ warning 6002: The table/view 'FacebookDebat.dbo.BadWords' does not have a primar
             <End Role="Word" EntitySet="Words" />
             <End Role="CommentWord" EntitySet="CommentWords" />
           </AssociationSet>
-          <AssociationSet Name="FK_Post_Page" Association="FacebookDebatModel.FK_Post_Page">
-            <End Role="Page" EntitySet="Pages" />
+          <AssociationSet Name="FK__Scrapees__entity__10566F31" Association="FacebookDebatModel.FK__Scrapees__entity__10566F31">
+            <End Role="Entity" EntitySet="Entities" />
+            <End Role="Scrapee" EntitySet="Scrapees" />
+          </AssociationSet>
+          <AssociationSet Name="FK_Entity_Post" Association="FacebookDebatModel.FK_Entity_Post">
+            <End Role="Entity" EntitySet="Entities" />
             <End Role="Post" EntitySet="Posts" />
           </AssociationSet>
         </EntityContainer>
@@ -204,15 +212,16 @@ warning 6002: The table/view 'FacebookDebat.dbo.BadWords' does not have a primar
           </Key>
           <Property Name="id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
           <Property Name="fb_id" Type="String" Nullable="false" MaxLength="100" FixedLength="false" Unicode="false" />
-          <Property Name="message" Type="String" Nullable="false" MaxLength="Max" FixedLength="false" Unicode="false" />
           <Property Name="post_id" Type="Int32" Nullable="false" />
-          <Property Name="user_id" Type="Int32" Nullable="false" />
-          <NavigationProperty Name="Post" Relationship="FacebookDebatModel.FK_Comment_Post" FromRole="Comment" ToRole="Post" />
-          <NavigationProperty Name="User" Relationship="FacebookDebatModel.FK_Comment_User" FromRole="Comment" ToRole="User" />
-          <NavigationProperty Name="CommentWords" Relationship="FacebookDebatModel.FK_CommentWords_Comment" FromRole="Comment" ToRole="CommentWord" />
+          <Property Name="entity_id" Type="Int32" Nullable="false" />
+          <Property Name="date" Type="DateTime" Precision="3" />
           <Property Name="score" Type="Double" />
           <Property Name="scored" Type="Boolean" Nullable="false" />
-          <Property Name="date" Type="DateTime" Precision="3" />
+          <Property Name="message" Type="String" Nullable="false" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <NavigationProperty Name="Post" Relationship="FacebookDebatModel.FK_Comment_Post" FromRole="Comment" ToRole="Post" />
+          <NavigationProperty Name="Entity" Relationship="FacebookDebatModel.FK_Comment_User" FromRole="Comment" ToRole="Entity" />
+          <NavigationProperty Name="CommentWords" Relationship="FacebookDebatModel.FK_CommentWords_Comment" FromRole="Comment" ToRole="CommentWord" />
+          <Property Name="splitted" Type="Boolean" Nullable="false" />
         </EntityType>
         <EntityType Name="CommentWord">
           <Key>
@@ -224,15 +233,17 @@ warning 6002: The table/view 'FacebookDebat.dbo.BadWords' does not have a primar
           <NavigationProperty Name="Comment" Relationship="FacebookDebatModel.FK_CommentWords_Comment" FromRole="CommentWord" ToRole="Comment" />
           <NavigationProperty Name="Word" Relationship="FacebookDebatModel.FK_CommentWords_Words" FromRole="CommentWord" ToRole="Word" />
         </EntityType>
-        <EntityType Name="Page">
+        <EntityType Name="Entity">
           <Key>
             <PropertyRef Name="id" />
           </Key>
           <Property Name="id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
-          <Property Name="enabled" Type="Boolean" Nullable="false" />
+          <Property Name="fb_id" Type="String" Nullable="false" MaxLength="50" FixedLength="false" Unicode="false" />
           <Property Name="name" Type="String" Nullable="false" MaxLength="100" FixedLength="false" Unicode="false" />
-          <Property Name="fb_id" Type="String" Nullable="false" MaxLength="100" FixedLength="false" Unicode="false" />
-          <NavigationProperty Name="Posts" Relationship="FacebookDebatModel.FK_Post_Page" FromRole="Page" ToRole="Post" />
+          <Property Name="isPage" Type="Boolean" Nullable="false" />
+          <NavigationProperty Name="Comments" Relationship="FacebookDebatModel.FK_Comment_User" FromRole="Entity" ToRole="Comment" />
+          <NavigationProperty Name="Scrapees" Relationship="FacebookDebatModel.FK__Scrapees__entity__10566F31" FromRole="Entity" ToRole="Scrapee" />
+          <NavigationProperty Name="Posts" Relationship="FacebookDebatModel.FK_Entity_Post" FromRole="Entity" ToRole="Post" />
         </EntityType>
         <EntityType Name="Post">
           <Key>
@@ -240,21 +251,23 @@ warning 6002: The table/view 'FacebookDebat.dbo.BadWords' does not have a primar
           </Key>
           <Property Name="id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
           <Property Name="fb_id" Type="String" Nullable="false" MaxLength="200" FixedLength="false" Unicode="false" />
-          <Property Name="message" Type="String" Nullable="false" MaxLength="Max" FixedLength="false" Unicode="false" />
-          <Property Name="page_id" Type="Int32" Nullable="false" />
-          <NavigationProperty Name="Comments" Relationship="FacebookDebatModel.FK_Comment_Post" FromRole="Post" ToRole="Comment" />
-          <NavigationProperty Name="Page" Relationship="FacebookDebatModel.FK_Post_Page" FromRole="Post" ToRole="Page" />
+          <Property Name="entity_id" Type="Int32" Nullable="false" />
           <Property Name="date" Type="DateTime" Precision="3" />
           <Property Name="scraped" Type="Boolean" Nullable="false" />
+          <Property Name="message" Type="String" Nullable="false" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <NavigationProperty Name="Comments" Relationship="FacebookDebatModel.FK_Comment_Post" FromRole="Post" ToRole="Comment" />
+          <NavigationProperty Name="Entity" Relationship="FacebookDebatModel.FK_Entity_Post" FromRole="Post" ToRole="Entity" />
         </EntityType>
-        <EntityType Name="User">
+        <EntityType Name="Scrapee">
           <Key>
             <PropertyRef Name="id" />
           </Key>
           <Property Name="id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
-          <Property Name="fb_id" Type="String" Nullable="false" MaxLength="50" FixedLength="false" Unicode="false" />
+          <Property Name="enabled" Type="Boolean" Nullable="false" />
           <Property Name="name" Type="String" Nullable="false" MaxLength="100" FixedLength="false" Unicode="false" />
-          <NavigationProperty Name="Comments" Relationship="FacebookDebatModel.FK_Comment_User" FromRole="User" ToRole="Comment" />
+          <Property Name="fb_id" Type="String" Nullable="false" MaxLength="100" FixedLength="false" Unicode="false" />
+          <Property Name="entity_id" Type="Int32" />
+          <NavigationProperty Name="Entity" Relationship="FacebookDebatModel.FK__Scrapees__entity__10566F31" FromRole="Scrapee" ToRole="Entity" />
         </EntityType>
         <EntityType Name="Word">
           <Key>
@@ -263,14 +276,6 @@ warning 6002: The table/view 'FacebookDebat.dbo.BadWords' does not have a primar
           <Property Name="id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
           <Property Name="word1" Type="String" Nullable="false" MaxLength="100" FixedLength="false" Unicode="false" />
           <NavigationProperty Name="CommentWords" Relationship="FacebookDebatModel.FK_CommentWords_Words" FromRole="Word" ToRole="CommentWord" />
-        </EntityType>
-        <EntityType Name="BadWord">
-          <Key>
-            <PropertyRef Name="id" />
-            <PropertyRef Name="word" />
-          </Key>
-          <Property Name="id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
-          <Property Name="word" Type="String" Nullable="false" MaxLength="100" FixedLength="false" Unicode="false" />
         </EntityType>
         <Association Name="FK_Comment_Post">
           <End Type="FacebookDebatModel.Post" Role="Post" Multiplicity="1" />
@@ -285,14 +290,14 @@ warning 6002: The table/view 'FacebookDebat.dbo.BadWords' does not have a primar
           </ReferentialConstraint>
         </Association>
         <Association Name="FK_Comment_User">
-          <End Type="FacebookDebatModel.User" Role="User" Multiplicity="1" />
+          <End Type="FacebookDebatModel.Entity" Role="Entity" Multiplicity="1" />
           <End Type="FacebookDebatModel.Comment" Role="Comment" Multiplicity="*" />
           <ReferentialConstraint>
-            <Principal Role="User">
+            <Principal Role="Entity">
               <PropertyRef Name="id" />
             </Principal>
             <Dependent Role="Comment">
-              <PropertyRef Name="user_id" />
+              <PropertyRef Name="entity_id" />
             </Dependent>
           </ReferentialConstraint>
         </Association>
@@ -320,19 +325,33 @@ warning 6002: The table/view 'FacebookDebat.dbo.BadWords' does not have a primar
             </Dependent>
           </ReferentialConstraint>
         </Association>
-        <Association Name="FK_Post_Page">
-          <End Type="FacebookDebatModel.Page" Role="Page" Multiplicity="1" />
-          <End Type="FacebookDebatModel.Post" Role="Post" Multiplicity="*" />
+        <Association Name="FK__Scrapees__entity__10566F31">
+          <End Type="FacebookDebatModel.Entity" Role="Entity" Multiplicity="0..1" />
+          <End Type="FacebookDebatModel.Scrapee" Role="Scrapee" Multiplicity="*" />
           <ReferentialConstraint>
-            <Principal Role="Page">
+            <Principal Role="Entity">
               <PropertyRef Name="id" />
             </Principal>
-            <Dependent Role="Post">
-              <PropertyRef Name="page_id" />
+            <Dependent Role="Scrapee">
+              <PropertyRef Name="entity_id" />
             </Dependent>
           </ReferentialConstraint>
         </Association>
-      </Schema>
+        <Association Name="FK_Entity_Post">
+          <End Type="FacebookDebatModel.Entity" Role="Entity" Multiplicity="1">
+            <OnDelete Action="Cascade" />
+          </End>
+          <End Type="FacebookDebatModel.Post" Role="Post" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Entity">
+              <PropertyRef Name="id" />
+            </Principal>
+            <Dependent Role="Post">
+              <PropertyRef Name="entity_id" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        </Schema>
     </edmx:ConceptualModels>
     <!-- C-S mapping content -->
     <edmx:Mappings>
@@ -340,13 +359,14 @@ warning 6002: The table/view 'FacebookDebat.dbo.BadWords' does not have a primar
         <EntityContainerMapping StorageEntityContainer="FacebookDebatModelStoreContainer" CdmEntityContainer="FacebookDebatEntities">
           <EntitySetMapping Name="Comments">
             <EntityTypeMapping TypeName="FacebookDebatModel.Comment">
-              <MappingFragment StoreEntitySet="Comment">
-                <ScalarProperty Name="date" ColumnName="date" />
+              <MappingFragment StoreEntitySet="Comments">
+                <ScalarProperty Name="splitted" ColumnName="splitted" />
+                <ScalarProperty Name="message" ColumnName="message" />
                 <ScalarProperty Name="scored" ColumnName="scored" />
                 <ScalarProperty Name="score" ColumnName="score" />
-                <ScalarProperty Name="user_id" ColumnName="user_id" />
+                <ScalarProperty Name="date" ColumnName="date" />
+                <ScalarProperty Name="entity_id" ColumnName="entity_id" />
                 <ScalarProperty Name="post_id" ColumnName="post_id" />
-                <ScalarProperty Name="message" ColumnName="message" />
                 <ScalarProperty Name="fb_id" ColumnName="fb_id" />
                 <ScalarProperty Name="id" ColumnName="id" />
               </MappingFragment>
@@ -361,33 +381,35 @@ warning 6002: The table/view 'FacebookDebat.dbo.BadWords' does not have a primar
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>
-          <EntitySetMapping Name="Pages">
-            <EntityTypeMapping TypeName="FacebookDebatModel.Page">
-              <MappingFragment StoreEntitySet="Page">
-                <ScalarProperty Name="fb_id" ColumnName="fb_id" />
+          <EntitySetMapping Name="Entities">
+            <EntityTypeMapping TypeName="FacebookDebatModel.Entity">
+              <MappingFragment StoreEntitySet="Entities">
+                <ScalarProperty Name="isPage" ColumnName="isPage" />
                 <ScalarProperty Name="name" ColumnName="name" />
-                <ScalarProperty Name="enabled" ColumnName="enabled" />
+                <ScalarProperty Name="fb_id" ColumnName="fb_id" />
                 <ScalarProperty Name="id" ColumnName="id" />
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>
           <EntitySetMapping Name="Posts">
             <EntityTypeMapping TypeName="FacebookDebatModel.Post">
-              <MappingFragment StoreEntitySet="Post">
+              <MappingFragment StoreEntitySet="Posts">
+                <ScalarProperty Name="message" ColumnName="message" />
                 <ScalarProperty Name="scraped" ColumnName="scraped" />
                 <ScalarProperty Name="date" ColumnName="date" />
-                <ScalarProperty Name="page_id" ColumnName="page_id" />
-                <ScalarProperty Name="message" ColumnName="message" />
+                <ScalarProperty Name="entity_id" ColumnName="entity_id" />
                 <ScalarProperty Name="fb_id" ColumnName="fb_id" />
                 <ScalarProperty Name="id" ColumnName="id" />
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>
-          <EntitySetMapping Name="Users">
-            <EntityTypeMapping TypeName="FacebookDebatModel.User">
-              <MappingFragment StoreEntitySet="User">
-                <ScalarProperty Name="name" ColumnName="name" />
+          <EntitySetMapping Name="Scrapees">
+            <EntityTypeMapping TypeName="FacebookDebatModel.Scrapee">
+              <MappingFragment StoreEntitySet="Scrapees">
+                <ScalarProperty Name="entity_id" ColumnName="entity_id" />
                 <ScalarProperty Name="fb_id" ColumnName="fb_id" />
+                <ScalarProperty Name="name" ColumnName="name" />
+                <ScalarProperty Name="enabled" ColumnName="enabled" />
                 <ScalarProperty Name="id" ColumnName="id" />
               </MappingFragment>
             </EntityTypeMapping>
@@ -396,14 +418,6 @@ warning 6002: The table/view 'FacebookDebat.dbo.BadWords' does not have a primar
             <EntityTypeMapping TypeName="FacebookDebatModel.Word">
               <MappingFragment StoreEntitySet="Words">
                 <ScalarProperty Name="word1" ColumnName="word" />
-                <ScalarProperty Name="id" ColumnName="id" />
-              </MappingFragment>
-            </EntityTypeMapping>
-          </EntitySetMapping>
-          <EntitySetMapping Name="BadWords">
-            <EntityTypeMapping TypeName="FacebookDebatModel.BadWord">
-              <MappingFragment StoreEntitySet="BadWords">
-                <ScalarProperty Name="word" ColumnName="word" />
                 <ScalarProperty Name="id" ColumnName="id" />
               </MappingFragment>
             </EntityTypeMapping>

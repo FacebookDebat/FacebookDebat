@@ -21,15 +21,16 @@ namespace Common.Data
     
         public int id { get; set; }
         public string fb_id { get; set; }
-        public string message { get; set; }
         public int post_id { get; set; }
-        public int user_id { get; set; }
+        public int entity_id { get; set; }
+        public Nullable<System.DateTime> date { get; set; }
         public Nullable<double> score { get; set; }
         public bool scored { get; set; }
-        public Nullable<System.DateTime> date { get; set; }
+        public string message { get; set; }
+        public bool splitted { get; set; }
     
         public virtual Post Post { get; set; }
-        public virtual User User { get; set; }
+        public virtual Entity Entity { get; set; }
         public virtual ICollection<CommentWord> CommentWords { get; set; }
     }
 }

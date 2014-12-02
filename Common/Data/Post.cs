@@ -21,12 +21,12 @@ namespace Common.Data
     
         public int id { get; set; }
         public string fb_id { get; set; }
-        public string message { get; set; }
-        public int page_id { get; set; }
+        public int entity_id { get; set; }
         public Nullable<System.DateTime> date { get; set; }
         public bool scraped { get; set; }
+        public string message { get; set; }
     
         public virtual ICollection<Comment> Comments { get; set; }
-        public virtual Page Page { get; set; }
+        public virtual Entity Entity { get; set; }
     }
 }

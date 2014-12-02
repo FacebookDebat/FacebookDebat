@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data.SqlClient;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -11,21 +12,9 @@ namespace Common
 {
     public static class Tools
     {
-
-        public static List<T> ExecuteReader<T>(string s, Func<SqlDataReader, T> f, params SqlParameter[] parms)
+        public static int ToUnixTimestamp(this DateTime t)
         {
-            var rv = new List<T>();
-            SqlConnection conn = new SqlConnection(ConfigurationManager.ConnectionStrings["FacebookDebat"].ConnectionString);
-            conn.Open();
-            var command = conn.CreateCommand();
-            command.CommandText = s;
-            command.Parameters.AddRange(parms);
-            var reader = command.ExecuteReader();
-            while (reader.Read())
-            {
-                rv.Add(f(reader));
-            }
-            return rv;
+            return (Int32)(t.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
         }
 
         //http://mukundsideas.blogspot.dk/2010/07/how-to-split-sentence-into-word-using-c.html
