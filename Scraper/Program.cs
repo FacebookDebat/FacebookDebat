@@ -228,6 +228,10 @@ namespace Scraper
                                     updatedComments.Add(comment);
 
                                 comment.message = fb_comment.message;
+                                //New classifier - Should of course not be constructed here.
+                                BasicClassifier.Classifier NielsenClassify = new BasicClassifier.Classifier(@"C:\Users\johanvts\Documents\Visual Studio 2013\Projects\FacebookDebat\BasicClassifier\Nielsen2010.txt");
+                                NielsenClassify.Score(fb_comment.message);
+                                //Old classifier
                                 comment.score = Classifier.Classify(fb_comment.message);
                             }
                         }

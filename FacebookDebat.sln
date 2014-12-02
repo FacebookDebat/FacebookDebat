@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
-VisualStudioVersion = 12.0.30501.0
+VisualStudioVersion = 12.0.30723.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Scraper", "Scraper\Scraper.csproj", "{CB9A8E1E-EB43-4C6B-B618-CBB8BF44D2C8}"
 EndProject
@@ -10,6 +10,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common", "Common\Common.csproj", "{55ED3353-3905-4F99-874C-4E3EF75DFEE1}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Web", "Web\Web.csproj", "{2104546F-2905-45A1-9F4E-0C52FB127852}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "BasicClassifier", "BasicClassifier\BasicClassifier.fsproj", "{91D04E8A-28BB-4EFB-B669-703E0A7A8B7D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -29,11 +31,12 @@ Global
 		{2104546F-2905-45A1-9F4E-0C52FB127852}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2104546F-2905-45A1-9F4E-0C52FB127852}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2104546F-2905-45A1-9F4E-0C52FB127852}.Release|Any CPU.Build.0 = Release|Any CPU
+		{91D04E8A-28BB-4EFB-B669-703E0A7A8B7D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{91D04E8A-28BB-4EFB-B669-703E0A7A8B7D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{91D04E8A-28BB-4EFB-B669-703E0A7A8B7D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{91D04E8A-28BB-4EFB-B669-703E0A7A8B7D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
-	EndGlobalSection
-	GlobalSection(Performance) = preSolution
-		HasPerformanceSessions = true
 	EndGlobalSection
 EndGlobal
