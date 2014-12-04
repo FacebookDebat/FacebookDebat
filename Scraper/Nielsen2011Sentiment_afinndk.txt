@@ -129,7 +129,7 @@ anholdte	-2
 anklage	-2
 anklagede	-2
 anklaget	-2
-anmelde		-1
+anmelde	-1
 anmedelt	-1
 anmedelte	-1
 annullere	-1
@@ -2353,7 +2353,7 @@ seriøs	2
 seværdigheder	1
 sexistisk	-2
 sexistiske	-2
-sexisme		-2
+sexisme	-2
 sexismen	-2
 sexmisbrug	-3
 sexmisbruget	-3

@@ -8,7 +8,7 @@ open LSA
 open System.IO
 open System
 
-let Stem sentence =
+let Stem sentence = 
     LSA.WordCleaner.Clean sentence
 
 let ParseScorelist scorelist =

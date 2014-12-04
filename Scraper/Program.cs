@@ -45,8 +45,7 @@ namespace Scraper
                 GetComments(fb);
 
             if (splitComments)
-                while(true)
-                    CommentSplitter.SplitWords();
+                CommentSplitter.SplitWords();
 
             Console.WriteLine("Finished.");
 
@@ -228,10 +227,6 @@ namespace Scraper
                                     updatedComments.Add(comment);
 
                                 comment.message = fb_comment.message;
-                                //New classifier - Should of course not be constructed here.
-                                BasicClassifier.Classifier NielsenClassify = new BasicClassifier.Classifier(@"C:\Users\johanvts\Documents\Visual Studio 2013\Projects\FacebookDebat\BasicClassifier\Nielsen2010.txt");
-                                NielsenClassify.Score(fb_comment.message);
-                                //Old classifier
                                 comment.score = Classifier.Classify(fb_comment.message);
                             }
                         }
@@ -256,7 +251,7 @@ namespace Scraper
                 Console.WriteLine("Updating " + updatedComments.Count() + " comments");
                 Parallel.ForEach(updatedComments, (comment) =>
                 {
-                    db.Database.ExecuteSqlCommand("UPDATE dbo.[Comments] SET message = @comment WHERE id = @id", new SqlParameter("id", comment.id), new SqlParameter("comment", comment.message));
+                    DatabaseTools.ExecuteNonQuery("UPDATE dbo.[Comments] SET message = @comment WHERE id = @id", new SqlParameter("id", comment.id), new SqlParameter("comment", comment.message));
                 });
             }
 
