@@ -35,17 +35,27 @@ namespace Scraper
             bool getPosts = bool.Parse(ConfigurationManager.AppSettings["GetPosts"]);
             bool getComments = bool.Parse(ConfigurationManager.AppSettings["GetComments"]);
             bool splitComments = bool.Parse(ConfigurationManager.AppSettings["SplitComments"]);
-
+            
             if (getNames)
                 GetScrapees(fb);
             if (getPosts)
                 GetPosts(fb);
-
             if (getComments)
                 GetComments(fb);
-
             if (splitComments)
                 CommentSplitter.SplitWords();
+
+            using (var db = new FacebookDebatEntities())
+            {
+                var unclassifiedComments = db.Comments.Where(x => !x.scored).ToList();
+                Console.WriteLine("Reclassifying " + unclassifiedComments.Count + " comments");
+                foreach (var comment in unclassifiedComments)
+                {
+                    DatabaseTools.ExecuteNonQuery("update dbo.comments set scored = 1, score = @score where id = @id",
+                        new SqlParameter("score", Classifier.Classify(comment.message)),
+                        new SqlParameter("id", comment.id));
+                }
+            }
 
             Console.WriteLine("Finished.");
 

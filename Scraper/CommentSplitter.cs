@@ -103,7 +103,6 @@ namespace Scraper
             {
                 DatabaseTools.ExecuteNonQuery("update dbo.Comments set splitted = 1 where id = @id", new SqlParameter("id", id));
             });
-            Console.WriteLine("Finisihed.");
         }
     }
 }
