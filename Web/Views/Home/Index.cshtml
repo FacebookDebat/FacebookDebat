@@ -5,45 +5,12 @@
 }
 
 <style>
-    thead tr {
-        font-weight: bold;
-    }
-
-    table {
-        font-size: 0.8em;
-    }
-
-    td {
-        padding-left: 4px;
-        padding-bottom: 4px;
-        vertical-align: top;
-    }
 
     .person {
         font-weight: bold;
     }
 
-    tr:nth-child(even) {
-        background: #CCC;
-    }
-
-    tr:nth-child(odd) {
-        background: #FFF;
-    }
 </style>
-@helper Cutoff(string s, int chars)
-{
-    if (s.Length > chars)
-    {
-        @(s.Substring(0, chars).Trim() + "...")
-    }
-    else
-    {
-        @s
-    }
-
-
-}
 <br />
 <table>
     <tbody>
@@ -57,11 +24,11 @@
                     </center>
                 </td>
                 <td>
-                    <div class="person">@item["post_name"]</div>
-                    @Cutoff(item["post"].ToString(), 50)
+                    <div class="person">@Html.ActionLink(item["post_name"].ToString(), "Page", "Politician", new { id = item["post_id"] }, new object())</div>
+                    @Lib.Cutoff(item["post"].ToString(), 50)
                 </td>
                 <td>
-                    <div class="person">@item["commenter_name"]</div>
+                    <div class="person">@Html.ActionLink(item["commenter_name"].ToString(), "Page", "Commenter", new { id = item["commenter_id"] }, new object())</div>
                     @item["comment"]
                 </td>
             </tr>

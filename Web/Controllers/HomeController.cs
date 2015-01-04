@@ -15,7 +15,7 @@ namespace FacebookDebat.Controllers
 
         public ActionResult Index()
         {
-            var result = DatabaseTools.ExecuteReader(@"select top 100 c.message as comment, p.message as post, c.date, ce.name as commenter_name, pe.name as post_name, c.score
+            var result = DatabaseTools.ExecuteReader(@"select top 100 c.message as comment, p.message as post, c.date, ce.name as commenter_name, ce.id as commenter_id, pe.name as post_name, pe.id as post_id, c.score
                                     from dbo.Comments c
                                     inner join dbo.Posts p on c.post_id = p.id
                                     inner join dbo.Entities ce on c.entity_id = ce.id
@@ -24,13 +24,9 @@ namespace FacebookDebat.Controllers
             return View(result);
         }
 
-        public ActionResult Graphs()
+        public void Stop(int id)
         {
-            return View();
-        }
-        public ActionResult Network()
-        {
-            return View();
+            DatabaseTools.ExecuteNonQuery("update Words set stop = 1 where id = @id", new SqlParameter("id", id));
         }
     }
 }

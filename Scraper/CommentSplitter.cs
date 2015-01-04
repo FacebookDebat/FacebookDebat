@@ -28,7 +28,7 @@ namespace Scraper
                 var seenWords = new HashSet<string>(db.Words.Select(x => x.word1));
 
                 db.Configuration.AutoDetectChangesEnabled = false;
-                        
+
                 Console.WriteLine("Finding un-splitted comments");
                 var comments = db.Comments.Where(x => !x.splitted).Take(10000).ToList();
                 commentIDList = comments.Select(x => x.id).ToList();
@@ -84,9 +84,9 @@ namespace Scraper
             // Add all commentWords
             Console.WriteLine("Inserting " + commentWords.Count + " new comment-words");
             int cnt = 0;
-            var commentWordChunks = commentWords.Chunk(10000);
+            var commentWordChunks = commentWords.Chunk(2500);
             var idTranslator = new FacebookDebatEntities().Words.ToDictionary(x => x.word1, x => x.id);
-            foreach(var chunk in commentWordChunks)
+            foreach (var chunk in commentWordChunks)
             {
                 DatabaseTools.BulkInsert("dbo.CommentWords", chunk.Select(x => new
                 {
@@ -99,10 +99,43 @@ namespace Scraper
             }
 
             Console.WriteLine("Marking splitted");
-            Parallel.ForEach(commentIDList, new ParallelOptions {  MaxDegreeOfParallelism = 10 }, (id) =>
+            Parallel.ForEach(commentIDList, new ParallelOptions { MaxDegreeOfParallelism = 10 }, (id) =>
             {
                 DatabaseTools.ExecuteNonQuery("update dbo.Comments set splitted = 1 where id = @id", new SqlParameter("id", id));
             });
+        }
+
+        internal static void StemWords()
+        {
+            using (var db = new FacebookDebatEntities())
+            {
+                db.Database.CommandTimeout = 0;
+
+                var words = db.Words.Where(x => x.stem_id == null);
+                Parallel.ForEach(words, new ParallelOptions { MaxDegreeOfParallelism = 50 }, (word) =>
+                {
+                    var stemmedWord = LSA.WordCleaner.Clean(word.word1).Single();
+
+                    if (stemmedWord != String.Empty)
+                    {
+                        try
+                        {
+                            int stemmedWordId = DatabaseTools.ExecuteFirst("select id from Words where word = @word", (r) => r.GetInt32(0), new SqlParameter("word", stemmedWord));
+
+                            if (stemmedWordId == 0)
+                                stemmedWordId = DatabaseTools.ExecuteFirst(@"INSERT INTO Words (word) VALUES (@word);
+                                                                         SELECT SCOPE_IDENTITY()",
+                                                                                     (r) => (int)r.GetDecimal(0),
+                                                                                     new SqlParameter("word", stemmedWord));
+                            DatabaseTools.ExecuteNonQuery("update Words set stem_id = @stem_id where word = @word", new SqlParameter("word", word.word1), new SqlParameter("stem_id", stemmedWordId));
+                        }
+                        catch (Exception e)
+                        {
+
+                        }
+                    }
+                });
+            }
         }
     }
 }

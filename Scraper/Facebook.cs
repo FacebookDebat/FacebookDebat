@@ -44,15 +44,18 @@ namespace Scraper
             return DateTime.Parse(token.ToString());
         }
 
-        public struct Post {
+        public struct Post
+        {
             public string message;
             public string id;
             public DateTime date;
         }
-        public List<Post> GetPosts(string page_fb_id) {
-            var since = DateTime.Now.AddDays(-30);
-            var until = DateTime.Now;
-            var obj = GetGraphApiReply(page_fb_id + "/posts", "fields=id,message,created_time&limit=250&since=" + since.ToUnixTimestamp() + "&until=" + until.ToUnixTimestamp());
+        public List<Post> GetPosts(string page_fb_id, int lookbackDays, DateTime dateFrom)
+        {
+            var limit = ConfigurationManager.AppSettings["PagePostLimit"];
+            var until = dateFrom;
+            var since = until.AddDays(-lookbackDays);
+            var obj = GetGraphApiReply(page_fb_id + "/posts", "fields=id,message,created_time&limit=" + limit + "&since=" + since.ToUnixTimestamp() + "&until=" + until.ToUnixTimestamp());
 
             var fb_posts = obj["data"].Where(x => x["message"] != null)
                 .Select(x =>
@@ -89,11 +92,13 @@ namespace Scraper
             return fb_comments.ToList();
         }
 
-        public struct User {
+        public struct User
+        {
             public string fb_id;
             public string name;
         }
-        public User GetUser(string user_fb_id) {
+        public User GetUser(string user_fb_id)
+        {
             var objName = GetGraphApiReply(user_fb_id, "fields=name");
             return new User
             {

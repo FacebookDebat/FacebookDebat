@@ -62,7 +62,9 @@
             <PropertyRef Name="id" />
           </Key>
           <Property Name="id" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
-          <Property Name="word" Type="varchar" MaxLength="100" Nullable="false" />
+          <Property Name="word" Type="nvarchar" MaxLength="100" Nullable="false" />
+          <Property Name="stop" Type="bit" Nullable="false" />
+          <Property Name="stem_id" Type="int" />
         </EntityType>
         <Association Name="FK__Scrapees__entity__10566F31">
           <End Role="Entities" Type="Self.Entities" Multiplicity="0..1" />
@@ -274,8 +276,10 @@
             <PropertyRef Name="id" />
           </Key>
           <Property Name="id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
-          <Property Name="word1" Type="String" Nullable="false" MaxLength="100" FixedLength="false" Unicode="false" />
+          <Property Name="word1" Type="String" Nullable="false" MaxLength="100" FixedLength="false" Unicode="true" />
           <NavigationProperty Name="CommentWords" Relationship="FacebookDebatModel.FK_CommentWords_Words" FromRole="Word" ToRole="CommentWord" />
+          <Property Name="stop" Type="Boolean" Nullable="false" />
+          <Property Name="stem_id" Type="Int32" />
         </EntityType>
         <Association Name="FK_Comment_Post">
           <End Type="FacebookDebatModel.Post" Role="Post" Multiplicity="1" />
@@ -417,6 +421,8 @@
           <EntitySetMapping Name="Words">
             <EntityTypeMapping TypeName="FacebookDebatModel.Word">
               <MappingFragment StoreEntitySet="Words">
+                <ScalarProperty Name="stem_id" ColumnName="stem_id" />
+                <ScalarProperty Name="stop" ColumnName="stop" />
                 <ScalarProperty Name="word1" ColumnName="word" />
                 <ScalarProperty Name="id" ColumnName="id" />
               </MappingFragment>

@@ -12,11 +12,13 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Net;
 using System.Threading;
+using System.Globalization;
 
 namespace Scraper
 {
     class Program
     {
+
         struct NewComment
         {
             public string fb_id;
@@ -29,42 +31,60 @@ namespace Scraper
 
         static void Main(string[] args)
         {
-            var fb = new Facebook();
-
-            bool getNames = bool.Parse(ConfigurationManager.AppSettings["GetNames"]);
-            bool getPosts = bool.Parse(ConfigurationManager.AppSettings["GetPosts"]);
-            bool getComments = bool.Parse(ConfigurationManager.AppSettings["GetComments"]);
-            bool splitComments = bool.Parse(ConfigurationManager.AppSettings["SplitComments"]);
-
-            if (getNames)
-                GetScrapees(fb);
-            if (getPosts)
-                GetPosts(fb);
-            if (getComments)
-                GetComments(fb);
-            if (splitComments)
-                CommentSplitter.SplitWords();
-
-            using (var db = new FacebookDebatEntities())
+            try
             {
-                var unclassifiedComments = db.Comments.Where(x => !x.scored).ToList();
-                if (unclassifiedComments.Count > 0)
+                var fb = new Facebook();
+
+                int lookbackDays = int.Parse(ConfigurationManager.AppSettings["LookbackDays"]);
+                bool getNames = bool.Parse(ConfigurationManager.AppSettings["GetNames"]);
+                bool getPosts = bool.Parse(ConfigurationManager.AppSettings["GetPosts"]);
+                bool getComments = bool.Parse(ConfigurationManager.AppSettings["GetComments"]);
+                bool splitComments = bool.Parse(ConfigurationManager.AppSettings["SplitComments"]);
+                bool stemWords = bool.Parse(ConfigurationManager.AppSettings["StemWords"]);
+
+                if (getNames)
+                    GetScrapees(fb);
+                if (getPosts)
                 {
-                    Console.WriteLine("Reclassifying " + unclassifiedComments.Count + " comments");
-                    Parallel.ForEach(unclassifiedComments, (comment) =>
+                    var date = DateTime.Now;
+                    if (args.Length == 1)
+                        date = DateTime.ParseExact(args[0], "yyyyMMdd", CultureInfo.InvariantCulture);
+                    GetPosts(fb, lookbackDays, date);
+                }
+                if (getComments)
+                    GetComments(fb, lookbackDays);
+                if (splitComments)
+                    CommentSplitter.SplitWords();
+                if (stemWords)
+                    CommentSplitter.StemWords();
+
+                using (var db = new FacebookDebatEntities())
+                {
+                    var unclassifiedComments = db.Comments.Where(x => !x.scored).ToList();
+                    if (unclassifiedComments.Count > 0)
                     {
-                        DatabaseTools.ExecuteNonQuery("update dbo.comments set scored = 1, score = @score where id = @id",
-                            new SqlParameter("score", Classifier.Classify(comment.message)),
-                            new SqlParameter("id", comment.id));
-                    });
+                        Console.WriteLine("Reclassifying " + unclassifiedComments.Count + " comments");
+                        Parallel.ForEach(unclassifiedComments, (comment) =>
+                        {
+                            DatabaseTools.ExecuteNonQuery("update dbo.comments set scored = 1, score = @score where id = @id",
+                                new SqlParameter("score", Classifier.Classify(comment.message)),
+                                new SqlParameter("id", comment.id));
+                        });
+                    }
+                }
+
+                Console.WriteLine("Finished.");
+
+                if (System.Diagnostics.Debugger.IsAttached)
+                {
+                    Console.ReadLine();
                 }
             }
-
-            Console.WriteLine("Finished.");
-
-            if (System.Diagnostics.Debugger.IsAttached)
+            catch(Exception e)
             {
-                Console.ReadLine();
+                Console.WriteLine("Error.");
+                Console.WriteLine(e.ToString());
+;
             }
         }
 
@@ -101,7 +121,7 @@ namespace Scraper
             }
         }
 
-        private static void GetPosts(Facebook fb)
+        private static void GetPosts(Facebook fb, int lookbackDays, DateTime dateFrom)
         {
             using (var db = new FacebookDebatEntities())
             {
@@ -109,7 +129,7 @@ namespace Scraper
                 var scrapees = db.Scrapees.Where(x => x.enabled).Select(x => new { name = x.name, entity = x.Entity }).ToList();
 
                 // Get posts for each page
-                Parallel.ForEach(scrapees, (scrapee) =>
+                Parallel.ForEach(scrapees, new ParallelOptions { MaxDegreeOfParallelism = 10}, (scrapee) =>
                 {
                     Console.WriteLine("Getting posts for " + scrapee.name);
 
@@ -118,7 +138,7 @@ namespace Scraper
 
                     try
                     {
-                        var fb_posts = fb.GetPosts(scrapee.entity.fb_id);
+                        var fb_posts = fb.GetPosts(scrapee.entity.fb_id, lookbackDays, dateFrom);
                         foreach (var fb_post in fb_posts)
                         {
                             Post post;
@@ -146,13 +166,14 @@ namespace Scraper
                     }
                     catch (Exception e)
                     {
+                        Console.WriteLine("Problem with " + scrapee.name);
                         Console.WriteLine(e.ToString());
                     }
                 });
             }
         }
 
-        private static void GetComments(Facebook fb)
+        private static void GetComments(Facebook fb, int lookBackDays)
         {
             var scrapedPosts = new List<Post>();
             var updatedComments = new List<Comment>();
@@ -167,16 +188,17 @@ namespace Scraper
 
             using (var db = new FacebookDebatEntities())
             {
+                db.Database.CommandTimeout = 0;
                 #region Build list of posts to be scraped for comments
                 Console.WriteLine("Building post-list");
-                var dayLimit = DateTime.Now.AddDays(-2);
+                var dayLimit = DateTime.Now.AddDays(-lookBackDays);
 
                 // Get new posts, or posts that are less than two days old
                 var posts = db.Posts.Where(x => !x.scraped || x.date > dayLimit).ToList();
 
                 // Get posts with comments that has been made less than two days old.
                 var postIds = db.Comments.Where(x => x.date > dayLimit).GroupBy(x => x.post_id).Select(x => x.Key);
-                posts = posts.Union(db.Posts.Where(x => postIds.Contains(x.id))).ToList();
+                posts = posts.Union(db.Posts.Where(x => postIds.Contains(x.id))).Take(500).ToList();
                 #endregion
 
                 #region Get Caches
@@ -306,6 +328,12 @@ namespace Scraper
                 commentInsertedCount += comments.Count();
                 Console.WriteLine("Inserted " + commentInsertedCount + "/" + newComments.Count + " new comments");
             }
+
+            Console.WriteLine("Marking scraped");
+            Parallel.ForEach(scrapedPosts, new ParallelOptions() { MaxDegreeOfParallelism = 10 }, scrapedPost =>
+            {
+                DatabaseTools.ExecuteNonQuery("UPDATE dbo.[Posts] SET scraped = 1 WHERE id = @id", new SqlParameter("id", scrapedPost.id));
+            });
         }
     }
 }

@@ -21,6 +21,8 @@ namespace Common.Data
     
         public int id { get; set; }
         public string word1 { get; set; }
+        public bool stop { get; set; }
+        public Nullable<int> stem_id { get; set; }
     
         public virtual ICollection<CommentWord> CommentWords { get; set; }
     }

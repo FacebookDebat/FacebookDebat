@@ -12,9 +12,9 @@ namespace Common
 {
     public static class Tools
     {
-        public static int ToUnixTimestamp(this DateTime t)
+        public static long ToUnixTimestamp(this DateTime t)
         {
-            return (Int32)(t.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
+            return (long)(t.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
         }
 
         //http://mukundsideas.blogspot.dk/2010/07/how-to-split-sentence-into-word-using-c.html
