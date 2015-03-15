@@ -70,6 +70,7 @@ namespace Scraper
 
         public struct Comment
         {
+            public string post_id;
             public string message;
             public string id;
             public string user_id;
@@ -82,6 +83,7 @@ namespace Scraper
                     "fields=id,message,from,created_time&filter=stream&offset=0&limit=1000")["data"]
             .Select(x => new Comment
             {
+                post_id = post_fb_id,
                 id = x["id"].ToString(),
                 message = x["message"].ToString(),
                 user_id = x["from"]["id"].ToString(),

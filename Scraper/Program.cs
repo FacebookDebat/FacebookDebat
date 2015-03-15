@@ -18,7 +18,6 @@ namespace Scraper
 {
     class Program
     {
-
         struct NewComment
         {
             public string fb_id;
@@ -31,8 +30,10 @@ namespace Scraper
 
         static void Main(string[] args)
         {
+#if !DEBUG
             try
             {
+#endif
                 var fb = new Facebook();
 
                 int lookbackDays = int.Parse(ConfigurationManager.AppSettings["LookbackDays"]);
@@ -79,13 +80,15 @@ namespace Scraper
                 {
                     Console.ReadLine();
                 }
+#if !DEBUG
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 Console.WriteLine("Error.");
                 Console.WriteLine(e.ToString());
-;
+                ;
             }
+#endif
         }
 
         private static void GetScrapees(Facebook fb)
@@ -129,7 +132,7 @@ namespace Scraper
                 var scrapees = db.Scrapees.Where(x => x.enabled).Select(x => new { name = x.name, entity = x.Entity }).ToList();
 
                 // Get posts for each page
-                Parallel.ForEach(scrapees, new ParallelOptions { MaxDegreeOfParallelism = 10}, (scrapee) =>
+                Parallel.ForEach(scrapees, new ParallelOptions { MaxDegreeOfParallelism = 10 }, (scrapee) =>
                 {
                     Console.WriteLine("Getting posts for " + scrapee.name);
 
@@ -175,20 +178,13 @@ namespace Scraper
 
         private static void GetComments(Facebook fb, int lookBackDays)
         {
-            var scrapedPosts = new List<Post>();
-            var updatedComments = new List<Comment>();
-
-            var con_str = ConfigurationManager.ConnectionStrings["FacebookDebat"].ToString();
-
             Console.WriteLine("Getting comments");
-            var newComments = new List<NewComment>();
-            var newEntities = new List<Entity>();
-            var newEntitiesHashSet = new HashSet<string>();
-
-
             using (var db = new FacebookDebatEntities())
             {
+                var scrapedPosts = new List<Post>();
+
                 db.Database.CommandTimeout = 0;
+
                 #region Build list of posts to be scraped for comments
                 Console.WriteLine("Building post-list");
                 var dayLimit = DateTime.Now.AddDays(-lookBackDays);
@@ -197,36 +193,27 @@ namespace Scraper
                 var posts = db.Posts.Where(x => !x.scraped || x.date > dayLimit).ToList();
 
                 // Get posts with comments that has been made less than two days old.
-                var postIds = db.Comments.Where(x => x.date > dayLimit).GroupBy(x => x.post_id).Select(x => x.Key);
-                posts = posts.Union(db.Posts.Where(x => postIds.Contains(x.id))).Take(500).ToList();
+                var latestedCommentedPosts = db.Comments.Where(x => x.date > dayLimit).GroupBy(x => x.post_id).Select(x => x.Key);
+                posts = posts.Union(db.Posts.Where(x => latestedCommentedPosts.Contains(x.id))).ToList();
                 #endregion
 
-                #region Get Caches
-                var ActivePostID = posts.Select(x => x.id).ToList();
-                Console.WriteLine("Initializing user-cache");
-                var existingEntities = new HashSet<string>(db.Entities.Select(x => x.fb_id));
-                Console.WriteLine("Initializing comment-cache");
-                var existingComments = db.Comments.Where(x => ActivePostID.Contains(x.post_id)).ToDictionary(x => x.fb_id, x => x);
-                #endregion
-
-                int i = 0;
-
-                var fbFailed = false;
-
+                #region Scrape Comments from FB
+                List<List<Facebook.Comment>> postComments = new List<List<Facebook.Comment>>();
                 Console.WriteLine("Getting comments from " + posts.Count + " post");
+                var fbFailed = false;
                 Parallel.ForEach(posts, (post) =>
                 {
-                    Interlocked.Increment(ref i);
-
-                    //Console.WriteLine("Post " + i++ + "/" + posts.Count);
-
                     if (fbFailed)
                         return;
 
-                    List<Facebook.Comment> fb_comments;
                     try
                     {
-                        fb_comments = fb.GetComments(post.fb_id);
+                        var comments = fb.GetComments(post.fb_id);
+                        lock (postComments) { 
+                            postComments.Add(comments);
+                            scrapedPosts.Add(post);
+                        }
+
                     }
                     catch (Exception e)
                     {
@@ -236,104 +223,100 @@ namespace Scraper
 
                         return;
                     }
+                });
+                #endregion
 
-
-
-                    foreach (var fb_comment in fb_comments)
-                    {
-                        if (!existingEntities.Contains(fb_comment.user_id) && !newEntitiesHashSet.Contains(fb_comment.user_id))
+                #region Update Entities
+                Console.WriteLine("Processing entities");
+                var entityUpdater = new UpdateOrInsertBuilder<Entity>(
+                    AlreadyExists: db.Entities.Select(x => x),
+                    GetKey: x => x.fb_id,
+                    Updater: (dbItem, memItem) => {
+                        if (dbItem.name != memItem.name)
                         {
-                            lock (newEntities)
-                            {
-                                newEntities.Add(new Entity()
-                                {
-                                    name = fb_comment.user_name,
-                                    fb_id = fb_comment.user_id
-                                });
-                                newEntitiesHashSet.Add(fb_comment.user_id);
-                            }
+                            dbItem.name = memItem.name;
+                            return true;
                         }
-                        Comment comment;
-                        if (existingComments.TryGetValue(fb_comment.id, out comment))
-                        {
-                            if (fb_comment.message != comment.message)
-                            {
-                                lock (updatedComments)
-                                    updatedComments.Add(comment);
-
-                                comment.message = fb_comment.message;
-                                comment.score = Classifier.Classify(fb_comment.message);
-                            }
-                        }
-                        else
-                        {
-                            lock (newComments)
-                                newComments.Add(new NewComment()
-                                {
-                                    fb_id = fb_comment.id,
-                                    message = fb_comment.message,
-                                    post_id = post.id,
-                                    user_fb_id = fb_comment.user_id,
-                                    date = fb_comment.date,
-                                    score = Common.Classifier.Classify(fb_comment.message)
-                                });
-                        }
+                        return false;
                     }
-                    lock (scrapedPosts)
-                        scrapedPosts.Add(post);
-                });
+                );
 
-                Console.WriteLine("Updating " + updatedComments.Count() + " comments");
-                Parallel.ForEach(updatedComments, (comment) =>
+                foreach (var post in postComments)
                 {
-                    DatabaseTools.ExecuteNonQuery("UPDATE dbo.[Comments] SET message = @comment WHERE id = @id", new SqlParameter("id", comment.id), new SqlParameter("comment", comment.message));
-                });
-            }
-
-            // Add all new users
-            Console.WriteLine("Inserting " + newEntities.Count + " entities");
-            var entityInsertedCount = 0;
-            var entityBulkSize = int.Parse(ConfigurationManager.AppSettings["UserBulkSize"]);
-            foreach (var entityList in newEntities.Chunk(entityBulkSize))
-            {
-                DatabaseTools.BulkInsert("dbo.Entities", entityList.Select(x => new
-                {
-                    id = (int?)null,
-                    fb_id = x.fb_id,
-                    name = x.name
-                }));
-
-                entityInsertedCount += entityList.Count();
-                Console.WriteLine("Inserted " + entityInsertedCount + "/" + newEntities.Count + " new entities");
-            }
-
-            var commentInsertedCount = 0;
-            var idTranslator = new FacebookDebatEntities().Entities.ToDictionary(x => x.fb_id, x => x.id);
-            var commentBulkSize = int.Parse(ConfigurationManager.AppSettings["CommentBulkSize"]);
-            foreach (var comments in newComments.Chunk(commentBulkSize))
-            {
-                DatabaseTools.BulkInsert("dbo.[Comments]",
-                    comments.Select(x => new
+                    foreach (var comment in post)
                     {
-                        id = (int?)null,
-                        fb_id = x.fb_id,
-                        post_id = x.post_id,
-                        user_id = idTranslator[x.user_fb_id],
-                        date = x.date,
-                        score = x.score,
-                        scored = 1,
-                        message = x.message,
-                        splitted = 0,
-                    }));
-                commentInsertedCount += comments.Count();
-                Console.WriteLine("Inserted " + commentInsertedCount + "/" + newComments.Count + " new comments");
-            }
+                        entityUpdater.Process(comment.user_id, () => new Entity
+                        {
+                            fb_id = comment.user_id,
+                            name = comment.user_name
+                        });
+                    }
+                }
 
-            Console.WriteLine("Marking scraped");
-            Parallel.ForEach(scrapedPosts, new ParallelOptions() { MaxDegreeOfParallelism = 10 }, scrapedPost =>
-            {
-                DatabaseTools.ExecuteNonQuery("UPDATE dbo.[Posts] SET scraped = 1 WHERE id = @id", new SqlParameter("id", scrapedPost.id));
-            });
+                entityUpdater.SyncDatabase(2000, "dbo.Entities", "id", x => new {
+                                                id = (int?)null,
+                                                fb_id = x.fb_id,
+                                                name = x.name
+                                            });
+                #endregion
+
+                #region Update comments
+                Console.WriteLine("Initializing comment-cache");
+                var ActivePostID = posts.Select(x => x.id).ToList();
+
+                var commentUpdater = new UpdateOrInsertBuilder<Comment>(
+                                    AlreadyExists: db.Comments.Where(x => ActivePostID.Contains(x.post_id)),
+                                    GetKey: x => x.fb_id,
+                                    Updater: (dbItem, memItem) => {
+                                        if (dbItem.message != memItem.message)
+                                        {
+                                            dbItem.message = memItem.message;
+                                            return true;
+                                        }
+                                        return false;
+                                    }
+                                );
+
+                var postTranslator = db.Posts.ToDictionary(x => x.fb_id, x => x.id);
+                var entityTranslator = db.Entities.ToDictionary(x => x.fb_id, x => x.id);
+                Console.WriteLine("Processing comments");
+                foreach (var post in postComments)
+                {
+                    foreach (var comment in post)
+                    {
+                        commentUpdater.Process(comment.id, () => new Comment()
+                            {
+                                fb_id = comment.id,
+                                message = comment.message,
+                                post_id = postTranslator[comment.post_id],
+                                entity_id = entityTranslator[comment.user_id],
+                                date = comment.date,
+                                score = Common.Classifier.Classify(comment.message)
+                            });
+
+                    }
+                }
+                commentUpdater.SyncDatabase(2000, "dbo.[Comments]", "id", x => new
+                        {
+                            id = (int?)null,
+                            fb_id = x.fb_id,
+                            post_id = x.post_id,
+                            entity_id = x.entity_id,
+                            date = x.date,
+                            score = x.score,
+                            scored = 1,
+                            message = x.message,
+                            splitted = 0,
+                        });
+                #endregion
+
+                Console.WriteLine("Marking scraped");
+                Parallel.ForEach(scrapedPosts, new ParallelOptions() { MaxDegreeOfParallelism = 10 }, scrapedPost =>
+                {
+                    if(!scrapedPost.scraped)
+                        DatabaseTools.ExecuteNonQuery("UPDATE dbo.[Posts] SET scraped = 1 WHERE id = @id", new SqlParameter("id", scrapedPost.id));
+                });
+            }
         }
     }
 }

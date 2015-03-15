@@ -83,6 +83,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="UpdateOrInsertBuilder.cs" />
     <Compile Include="CommentSplitter.cs" />
     <Compile Include="Facebook.cs" />
     <Compile Include="Program.cs" />

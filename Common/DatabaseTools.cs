@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.SqlServer.Server;
+using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
@@ -111,6 +112,39 @@ namespace Common
                 var reader = command.ExecuteNonQuery();
             }
         }
+
+        // http://www.c-sharpcorner.com/Forums/Thread/31044/how-to-convert-system-type-to-dbtype.aspx
+        public static DbType TypeToDbType(Type t)
+        {
+            DbType dbt;
+            try
+            {
+                dbt = (DbType)Enum.Parse(typeof(DbType), t.Name);
+            }
+            catch
+            {
+                dbt = DbType.Object;
+            }
+            return dbt;
+        }
+
+        //[DebuggerStepThroughAttribute]
+        public static void Update<T>(string table, string id, IEnumerable<T> items)
+        {
+            var itemColumns = typeof(T).GetProperties().ToList();
+            var columnClauses = itemColumns.Where(x => x.Name != id).Select(x => x.Name + " = @" + x.Name);
+
+            var sql = "UPDATE " + table + " SET " + String.Join(",", columnClauses) + " where " + id + " = @" + id;
+
+            Parallel.ForEach(items, new ParallelOptions { MaxDegreeOfParallelism = 1 }, item =>
+            {
+                var paramArray = itemColumns.Select(column => new SqlParameter(column.Name, TypeToDbType(Nullable.GetUnderlyingType(column.PropertyType) ?? column.PropertyType)) { Value = (object)column.GetValue(item) ?? DBNull.Value });
+                DatabaseTools.ExecuteNonQuery(sql, paramArray.ToArray());
+            });
+        }
+
+
+
         [DebuggerStepThroughAttribute]
         public static void BulkInsert<T>(string table, IEnumerable<T> items)
         {
