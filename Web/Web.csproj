@@ -190,6 +190,7 @@
     <Compile Include="App_Start\RouteConfig.cs" />
     <Compile Include="App_Start\WebApiConfig.cs" />
     <Compile Include="Controllers\AccountController.cs" />
+    <Compile Include="Controllers\FeedController.cs" />
     <Compile Include="Controllers\UsersController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Filters\InitializeSimpleMembershipAttribute.cs" />
@@ -288,6 +289,7 @@
     <Content Include="Scripts\angular.min.js" />
     <Content Include="Scripts\app\about.js" />
     <Content Include="Scripts\app\app.js" />
+    <Content Include="Scripts\app\feed.js" />
     <Content Include="Scripts\app\contact.js" />
     <Content Include="Scripts\app\demo.js" />
     <Content Include="Scripts\app\directives.js" />
@@ -360,12 +362,19 @@
     <Content Include="Views\Home\angular.cshtml" />
     <Content Include="Views\Home\Demo.cshtml" />
     <Content Include="Scripts\version.json" />
+    <Content Include="Views\Home\Feed.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Common\Common.csproj">
+      <Project>{55ed3353-3905-4f99-874c-4e3ef75dfee1}</Project>
+      <Name>Common</Name>
+    </ProjectReference>
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>

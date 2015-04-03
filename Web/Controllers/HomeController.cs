@@ -37,5 +37,10 @@ namespace Web.Controllers
         {
             return View();
         }
+
+        public ActionResult Feed()
+        {
+            return View();
+        }
     }
 }
