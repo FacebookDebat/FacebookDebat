@@ -34,6 +34,7 @@ namespace Web.Controllers
             }
         }
 
+        [HttpGet]
         public IEnumerable<Dictionary<string, object>> Posts()
         {
             return DatabaseTools.ExecuteReader(@"select top 100 (select message from Posts where id = p.id) as message, max(pc.date) as last_comment, p.date as post_date, pe.name as post_name, pe.id as poster_id, count(distinct pc.id) as comments, (select count(*) from PostLikes where post_id = p.id) as likes
@@ -41,7 +42,7 @@ namespace Web.Controllers
                                     inner join dbo.Entities pe on p.entity_id = pe.id
                                     inner join dbo.Comments pc on pc.post_id = p.id
 									group by p.id, pe.id, pe.name, p.date
-                                    order by max(pc.date) descc");
+                                    order by max(pc.date) desc");
         }
     }
 }

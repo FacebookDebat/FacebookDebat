@@ -11,51 +11,103 @@
     display: inline-block;
 }
 
-div.feed {
+div.commentfeed {
     margin: 10px;
-    font-size: 0.8em;
+    font-size: 0.7em;
 }
 
-div.feeditem {
+.commentfeed div.feeditem {
     width: 800px;
     float: left;
 }
 
-    div.feeditem div.time {
-        float: left;
-        width: 50px;
-    }
+.commentfeed div.feeditem div.time {
+    float: left;
+    width: 50px;
+}
 
-    div.feeditem div.post {
-        float: left;
-        width: 200px;
-        overflow: hidden;
-    }
+.commentfeed div.feeditem div.post {
+    float: left;
+    width: 200px;
+    overflow: hidden;
+}
 
-    div.feeditem div.comment {
-        float: left;
-        width: 500px;
-    }
-    div.feeditem div.person,
-    div.feeditem div.txt {
-        clear: left;
-        float: left;
-    }
+.commentfeed div.feeditem div.comment {
+    float: left;
+    width: 500px;
+}
 
-    div.feeditem div {
-        padding-left: 4px;
-        padding-bottom: 4px;
-        vertical-align: top;
-        float: left;
-    }
+.commentfeed div.feeditem div.person,
+.commentfeed div.feeditem div.txt {
+    clear: left;
+    float: left;
+}
 
-div.feed div.feeditem:nth-last-child(even) {
+.commentfeed div.feeditem div {
+    padding-left: 4px;
+    padding-bottom: 4px;
+    vertical-align: top;
+    float: left;
+}
+
+.commentfeed div.feeditem:nth-last-child(even) {
     background: #CCC;
 }
 
-div.feed div.feeditem:nth-last-child(odd) {
+.commentfeed div.feeditem:nth-last-child(odd) {
     background: #FFF;
 }
+
+.postFeed {
+    width: 500px;
+    overflow: hidden;
+}
+
+.postFeed .feeditem {
+    margin-bottom: 10px;
+    padding: 8px;
+    background-color: #EEE;
+    -webkit-border-radius: 5px;
+    -moz-border-radius: 5px;
+    border-radius: 5px;
+}
+
+.postFeed .poster {
+    font-weight: bold;
+    float: left;
+    clear: left;
+}
+
+.postFeed .time {
+    width: 200px;
+    float: left;
+    clear: left;
+    font-size: 0.7em;
+}
+
+.postFeed .post {
+    width: 480px;
+    clear: both;
+    white-space: pre-line;
+    font-size: 0.8em;
+}
+
+.postFeed .likes {
+    float: left;
+    font-size: 0.7em;
+}
+    .postFeed .likes > span {
+        font-weight: bold;
+    }
+.postFeed .comments {
+    float: left;
+    margin-left: 10px;
+    font-size: 0.7em;
+}
+    .postFeed .comments > span {
+        font-weight: bold;
+    }
+
 
 body {
     padding-top: 50px;
