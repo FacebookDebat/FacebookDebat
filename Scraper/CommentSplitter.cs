@@ -26,7 +26,9 @@ namespace Scraper
                 var commentIds = string.Join(",", comments.Select(x => x.id.ToString()).ToArray());
                 var deleteWordsTask = Task.Factory.StartNew(() =>
                 {
-                    DatabaseTools.ExecuteNonQuery(string.Format("DELETE FROM CommentWords WHERE comment_id IN ({0})", commentIds));
+                    if (commentIds.Count() != 0)
+                        DatabaseTools.ExecuteNonQuery(string.Format("DELETE FROM CommentWords WHERE comment_id IN ({0})", commentIds));
+
                     log.Info("Finished deleting words");
                 });
 
