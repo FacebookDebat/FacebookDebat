@@ -1,4 +1,63 @@
-﻿body {
+﻿.clearfix:after {
+    content: ".";
+    display: block;
+    clear: both;
+    visibility: hidden;
+    line-height: 0;
+    height: 0;
+}
+
+.clearfix {
+    display: inline-block;
+}
+
+div.feed {
+    margin: 10px;
+    font-size: 0.8em;
+}
+
+div.feeditem {
+    width: 800px;
+    float: left;
+}
+
+    div.feeditem div.time {
+        float: left;
+        width: 50px;
+    }
+
+    div.feeditem div.post {
+        float: left;
+        width: 200px;
+        overflow: hidden;
+    }
+
+    div.feeditem div.comment {
+        float: left;
+        width: 500px;
+    }
+    div.feeditem div.person,
+    div.feeditem div.txt {
+        clear: left;
+        float: left;
+    }
+
+    div.feeditem div {
+        padding-left: 4px;
+        padding-bottom: 4px;
+        vertical-align: top;
+        float: left;
+    }
+
+div.feed div.feeditem:nth-last-child(even) {
+    background: #CCC;
+}
+
+div.feed div.feeditem:nth-last-child(odd) {
+    background: #FFF;
+}
+
+body {
     padding-top: 50px;
     padding-bottom: 20px;
 }

@@ -21,19 +21,18 @@ namespace Web
 
             bundles.Add(new ScriptBundle("~/bundles/angular").Include(
                         "~/Scripts/angular.js",
+                        "~/Scripts/angular-animate.js",
                         "~/Scripts/angular-ng-grid.js",
                         "~/Scripts/angular-resource.js",
                         "~/Scripts/angular-route.js"));
 
             bundles.Add(new ScriptBundle("~/bundles/app").Include(
-                        "~/Scripts/app/app.js",
-                        "~/Scripts/app/services.js",
-                        "~/Scripts/app/directives.js",
-                        "~/Scripts/app/main.js",
-                        "~/Scripts/app/contact.js",
-                        "~/Scripts/app/about.js",
-                        "~/Scripts/app/demo.js"
-                        ));
+                        "~/App_Scripts/app.js",
+                        "~/App_Scripts/services.js",
+                        "~/App_Scripts/app/directives.js"
+                        ).IncludeDirectory(
+                        "~/App_Scripts", "*.js", true));
+
 
             // Use the development version of Modernizr to develop with and learn from. Then, when you're
             // ready for production, use the build tool at http://modernizr.com to pick only the tests you need.
