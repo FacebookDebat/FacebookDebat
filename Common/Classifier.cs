@@ -16,10 +16,12 @@ namespace Common
                 .Select(x => x.Split(new char[] { '\t' }, StringSplitOptions.RemoveEmptyEntries))
                 .ToDictionary(x => x[0], x => int.Parse(x[1])));
 
-        static Lazy<BasicClassifier.Classifier> NielsenClassify = new Lazy<BasicClassifier.Classifier>(() => new BasicClassifier.Classifier(ConfigurationManager.AppSettings["SentientListPath"]));
+/*        static Lazy<BasicClassifier.Classifier> NielsenClassify = new Lazy<BasicClassifier.Classifier>(() => new BasicClassifier.Classifier(ConfigurationManager.AppSettings["SentientListPath"]));*/
         public static double? Classify(string comment)
         {
-            var classifier = ConfigurationManager.AppSettings["Classifier"];
+            return null;
+
+/*            var classifier = ConfigurationManager.AppSettings["Classifier"];
             
             if(classifier == "none")
                 return null;
@@ -33,7 +35,7 @@ namespace Common
                     return wordsWithScore.Average(x => WordScores.Value[x]);
             }
 
-            return NielsenClassify.Value.Score(comment);
+            return NielsenClassify.Value.Score(comment);*/
         }
     }
 }

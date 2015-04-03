@@ -157,7 +157,7 @@ namespace Common
 
             Parallel.ForEach(items, new ParallelOptions { MaxDegreeOfParallelism = 1 }, item =>
             {
-                var paramArray = itemColumns.Select(column => new SqlParameter(column.Name, TypeToDbType(Nullable.GetUnderlyingType(column.PropertyType) ?? column.PropertyType)) { Value = (object)column.GetValue(item) ?? DBNull.Value });
+                var paramArray = itemColumns.Select(column => new SqlParameter(column.Name, TypeToDbType(Nullable.GetUnderlyingType(column.PropertyType) ?? column.PropertyType)) { Value = (object)column.GetValue(item, null) ?? DBNull.Value });
                 DatabaseTools.ExecuteNonQuery(sql, paramArray.ToArray());
             });
         }
@@ -194,7 +194,7 @@ namespace Common
                 var values = new object[columns.Count];
                 for (int i = 0; i < columns.Count; i++)
                 {
-                    values[i] = columns[i].GetValue(item);
+                    values[i] = columns[i].GetValue(item, null);
                 }
                 InsertTableTable.Rows.Add(values);
             }
