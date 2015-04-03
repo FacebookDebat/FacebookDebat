@@ -19,6 +19,7 @@ namespace Common.Data
             this.Comments = new HashSet<Comment>();
             this.Scrapees = new HashSet<Scrapee>();
             this.Posts = new HashSet<Post>();
+            this.PostLikes = new HashSet<PostLike>();
         }
     
         public int id { get; set; }
@@ -29,5 +30,6 @@ namespace Common.Data
         public virtual ICollection<Comment> Comments { get; set; }
         public virtual ICollection<Scrapee> Scrapees { get; set; }
         public virtual ICollection<Post> Posts { get; set; }
+        public virtual ICollection<PostLike> PostLikes { get; set; }
     }
 }

@@ -1,0 +1,37 @@
+﻿@model Tuple<List<FacebookDebat.Controllers.PoliticianController.Politician>, List<FacebookDebat.Controllers.PoliticianController.Commenter>>
+
+@{
+    ViewBag.Title = "List";
+}
+
+<h2>List</h2>
+
+<table style="width: 40%; float: left;">
+    <thead>
+        <tr><td>Politiker</td><td>Opdateringer</td><td>Kommentarer</td></tr>
+    </thead>
+    @foreach (var politician in Model.Item1)
+    {
+        <tr>
+            <td>@Html.ActionLink(politician.name, "Page", new { id = politician.id })</td>
+            <td class="number">@politician.postCount</td>
+            <td class="number">@politician.commentCount</td>
+        </tr>
+    }
+</table>
+
+<table style="width: 40%;  float: left;">
+    <thead>
+        <tr><td>Person</td><td>Kommentarer</td></tr>
+    </thead>
+    @foreach (var commenter in Model.Item2)
+    {
+        <tr>
+            <td>@Html.ActionLink(commenter.name, "Page", "Commenter", new { id = commenter.id }, new object())</td>
+            <td class="number">@commenter.commentCount</td>
+        </tr>
+    }
+</table>
+
+
+<div style="clear: both"></div>

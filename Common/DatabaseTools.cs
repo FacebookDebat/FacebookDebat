@@ -14,23 +14,28 @@ namespace Common
 {
     public class DatabaseTools
     {
+        private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+
         [DebuggerStepThroughAttribute]
         public static List<T> ExecuteReader<T>(string s, Func<SqlDataReader, T> f, params SqlParameter[] parms)
         {
-            var rv = new List<T>();
-            using (SqlConnection conn = new SqlConnection(ConfigurationManager.ConnectionStrings["FacebookDebat"].ConnectionString))
+            return Do(s, parms, () =>
             {
-                conn.Open();
-                var command = conn.CreateCommand();
-                command.CommandText = s;
-                command.Parameters.AddRange(parms);
-                var reader = command.ExecuteReader();
-                while (reader.Read())
+                var rv = new List<T>();
+                using (SqlConnection conn = new SqlConnection(ConfigurationManager.ConnectionStrings["FacebookDebat"].ConnectionString))
                 {
-                    rv.Add(f(reader));
+                    conn.Open();
+                    var command = conn.CreateCommand();
+                    command.CommandText = s;
+                    command.Parameters.AddRange(parms);
+                    var reader = command.ExecuteReader();
+                    while (reader.Read())
+                    {
+                        rv.Add(f(reader));
+                    }
+                    return rv;
                 }
-                return rv;
-            }
+            });
         }
         public static Task<List<Dictionary<string, object>>> ExecuteReaderAsync(string s, params SqlParameter[] parms)
         {
@@ -42,75 +47,89 @@ namespace Common
         [DebuggerStepThroughAttribute]
         public static T ExecuteSingle<T>(string s, Func<SqlDataReader, T> r, params SqlParameter[] parms)
         {
-            using (SqlConnection conn = new SqlConnection(ConfigurationManager.ConnectionStrings["FacebookDebat"].ConnectionString))
+            return Do(s, parms, () =>
             {
-                conn.Open();
-                var command = conn.CreateCommand();
-                command.CommandText = s;
-                command.Parameters.AddRange(parms);
-                var reader = command.ExecuteReader();
-                if (reader.Read())
+                using (SqlConnection conn = new SqlConnection(ConfigurationManager.ConnectionStrings["FacebookDebat"].ConnectionString))
                 {
-                    return r(reader);
+                    conn.Open();
+                    var command = conn.CreateCommand();
+                    command.CommandText = s;
+                    command.Parameters.AddRange(parms);
+                    var reader = command.ExecuteReader();
+                    if (reader.Read())
+                    {
+                        return r(reader);
+                    }
                 }
-            }
-            throw new Exception("...");
+                throw new Exception("...");
+            });
         }
 
         [DebuggerStepThroughAttribute]
         public static T ExecuteFirst<T>(string s, Func<SqlDataReader, T> r, params SqlParameter[] parms)
         {
-            using (SqlConnection conn = new SqlConnection(ConfigurationManager.ConnectionStrings["FacebookDebat"].ConnectionString))
+            return Do(s, parms, () =>
             {
-                conn.Open();
-                var command = conn.CreateCommand();
-                command.CommandText = s;
-                command.Parameters.AddRange(parms);
-                var reader = command.ExecuteReader();
-                if (reader.Read())
+                using (SqlConnection conn = new SqlConnection(ConfigurationManager.ConnectionStrings["FacebookDebat"].ConnectionString))
                 {
-                    return r(reader);
+                    conn.Open();
+                    var command = conn.CreateCommand();
+                    command.CommandText = s;
+                    command.Parameters.AddRange(parms);
+                    var reader = command.ExecuteReader();
+                    if (reader.Read())
+                    {
+                        return r(reader);
+                    }
                 }
-            }
-            return default(T);
+                return default(T);
+            });
         }
 
         [DebuggerStepThroughAttribute]
         public static List<Dictionary<string, object>> ExecuteReader(string s, params SqlParameter[] parms)
         {
-            var rv = new List<Dictionary<string, object>>();
-            using (SqlConnection conn = new SqlConnection(ConfigurationManager.ConnectionStrings["FacebookDebat"].ConnectionString))
+            return Do(s, parms, () =>
             {
-                conn.Open();
-                var command = conn.CreateCommand();
-                command.CommandText = s;
-                command.CommandTimeout = 0;
-                command.Parameters.AddRange(parms);
-                var reader = command.ExecuteReader();
-                while (reader.Read())
+
+                var rv = new List<Dictionary<string, object>>();
+                using (SqlConnection conn = new SqlConnection(ConfigurationManager.ConnectionStrings["FacebookDebat"].ConnectionString))
                 {
-                    var obj = new Dictionary<string, object>();
-                    for (int field = 0; field < reader.FieldCount; field++)
+                    conn.Open();
+                    var command = conn.CreateCommand();
+                    command.CommandText = s;
+                    command.CommandTimeout = 0;
+                    command.Parameters.AddRange(parms);
+                    var reader = command.ExecuteReader();
+                    while (reader.Read())
                     {
-                        obj[reader.GetName(field)] = reader.GetValue(field);
+                        var obj = new Dictionary<string, object>();
+                        for (int field = 0; field < reader.FieldCount; field++)
+                        {
+                            obj[reader.GetName(field)] = reader.GetValue(field);
+                        }
+                        rv.Add(obj);
                     }
-                    rv.Add(obj);
+                    return rv;
                 }
-                return rv;
-            }
+            });
         }
         public static void ExecuteNonQuery(string s, params SqlParameter[] parms)
         {
-            var rv = new List<Dictionary<string, object>>();
-            using (SqlConnection conn = new SqlConnection(ConfigurationManager.ConnectionStrings["FacebookDebat"].ConnectionString))
+            Do(s, parms, () =>
             {
-                conn.Open();
-                var command = conn.CreateCommand();
-                command.CommandTimeout = 0;
-                command.CommandText = s;
-                command.Parameters.AddRange(parms);
-                var reader = command.ExecuteNonQuery();
-            }
+                var rv = new List<Dictionary<string, object>>();
+                using (SqlConnection conn = new SqlConnection(ConfigurationManager.ConnectionStrings["FacebookDebat"].ConnectionString))
+                {
+                    conn.Open();
+                    var command = conn.CreateCommand();
+                    command.CommandTimeout = 0;
+                    command.CommandText = s;
+                    command.Parameters.AddRange(parms);
+                    var reader = command.ExecuteNonQuery();
+                }
+                return 1;
+            });
         }
 
         // http://www.c-sharpcorner.com/Forums/Thread/31044/how-to-convert-system-type-to-dbtype.aspx
@@ -128,13 +147,13 @@ namespace Common
             return dbt;
         }
 
-        //[DebuggerStepThroughAttribute]
-        public static void Update<T>(string table, string id, IEnumerable<T> items)
+        [DebuggerStepThroughAttribute]
+        public static void Update<T>(string table, string idColumn, IEnumerable<T> items)
         {
             var itemColumns = typeof(T).GetProperties().ToList();
-            var columnClauses = itemColumns.Where(x => x.Name != id).Select(x => x.Name + " = @" + x.Name);
+            var columnClauses = itemColumns.Where(x => x.Name != idColumn).Select(x => x.Name + " = @" + x.Name);
 
-            var sql = "UPDATE " + table + " SET " + String.Join(",", columnClauses) + " where " + id + " = @" + id;
+            var sql = "UPDATE " + table + " SET " + String.Join(",", columnClauses) + " where " + idColumn + " = @" + idColumn;
 
             Parallel.ForEach(items, new ParallelOptions { MaxDegreeOfParallelism = 1 }, item =>
             {
@@ -145,6 +164,20 @@ namespace Common
 
 
 
+        public static void ChunkInsert<T>(string table, int size, IEnumerable<T> items)
+        {
+            var cnt = items.Count();
+            int i = 0;
+
+            log.Info("ChunkInserting " + cnt + " items to " + table);
+            var chunks = items.Chunk(size);
+            foreach (var chunk in chunks)
+            {
+                BulkInsert(table, chunk);
+                i += chunk.Count();
+                log.Info("Inserted " + i + "/" + cnt + " items");
+            }
+        }
         [DebuggerStepThroughAttribute]
         public static void BulkInsert<T>(string table, IEnumerable<T> items)
         {
@@ -186,53 +219,104 @@ namespace Common
 
         public static List<T> ExecuteListReader<T>(string query, Func<SqlDataReader, T> getValues, params SqlParameter[] parms)
         {
-            var list = new List<T>();
-            using (SqlConnection conn = new SqlConnection(ConfigurationManager.ConnectionStrings["FacebookDebat"].ConnectionString))
+            return Do(query, parms, () =>
             {
-                conn.Open();
-                var command = conn.CreateCommand();
-                command.CommandTimeout = 0;
-                command.CommandText = query;
-                command.Parameters.AddRange(parms);
-
-                using (var reader = command.ExecuteReader())
+                var list = new List<T>();
+                using (SqlConnection conn = new SqlConnection(ConfigurationManager.ConnectionStrings["FacebookDebat"].ConnectionString))
                 {
-                    while (reader.Read())
+                    conn.Open();
+                    var command = conn.CreateCommand();
+                    command.CommandTimeout = 0;
+                    command.CommandText = query;
+                    command.Parameters.AddRange(parms);
+
+                    using (var reader = command.ExecuteReader())
                     {
-                        list.Add(getValues(reader));
+                        while (reader.Read())
+                        {
+                            list.Add(getValues(reader));
+                        }
+                        reader.Close();
+
                     }
-                    reader.Close();
-
                 }
-            }
+                return list;
+            });
 
-            return list;
         }
 
         public static Dictionary<T, Y> ExecuteDictionaryReader<T, Y>(string query, Func<SqlDataReader, T> getKey, Func<SqlDataReader, Y> getValue, params SqlParameter[] parms)
         {
-            var dict = new Dictionary<T, Y>();
-            using (SqlConnection conn = new SqlConnection(ConfigurationManager.ConnectionStrings["FacebookDebat"].ConnectionString))
+            return Do(query, parms, () =>
             {
-                conn.Open();
-                var command = conn.CreateCommand();
-                command.CommandTimeout = 0;
-                command.CommandText = query;
-                command.Parameters.AddRange(parms);
-
-                using (var reader = command.ExecuteReader())
+                var dict = new Dictionary<T, Y>();
+                using (SqlConnection conn = new SqlConnection(ConfigurationManager.ConnectionStrings["FacebookDebat"].ConnectionString))
                 {
-                    while (reader.Read())
+                    conn.Open();
+                    var command = conn.CreateCommand();
+                    command.CommandTimeout = 0;
+                    command.CommandText = query;
+                    command.Parameters.AddRange(parms);
+
+                    using (var reader = command.ExecuteReader())
                     {
-                        dict.Add(getKey(reader), getValue(reader));
+                        while (reader.Read())
+                        {
+                            dict.Add(getKey(reader), getValue(reader));
+                        }
+                        reader.Close();
+
                     }
-                    reader.Close();
+                }
+
+                return dict;
+            });
+        }
+        class SqlEception: Exception 
+        {
+            public readonly string query;
+            public readonly SqlParameter[] parms;
+            public SqlEception(string query, SqlParameter[] parms, Exception innerexception) : base("SQL Problems", innerexception)
+            {
+                this.query = query;
+                this.parms = parms;
+            }
+
+            public override string ToString()
+            {
+                var sql = String.Join(";\r\n", parms.Select(x => x.ParameterName + " = " + x.Value.ToString()).ToArray()) + "\r\n"
+                    + query + "\r\n";
+
+                return sql + base.ToString();
+            }
+        }
+        public static T Do<T>(string query, SqlParameter[] parms, Func<T> action, int? times = null, int wait = 1000, Action<Exception> onError = null)
+        {
+            if (times == null)
+                times = 20;
+
+            for (int i = 0; i < times; i++)
+            {
+                try
+                {
+                    return action();
+                }
+                catch (Exception e)
+                {
+                    if (onError != null)
+                        onError(e);
+
+                    if (i == times - 1)
+                        throw new SqlEception(query, parms, e);
+
+                    Thread.Sleep(wait);
 
                 }
             }
-
-            return dict;
+            throw new NotImplementedException("Should never happen");
         }
+
+
         public static T Do<T>(Func<T> action, int? times = null, int wait = 1000, Action<Exception> onError = null)
         {
             if (times == null)
@@ -257,6 +341,5 @@ namespace Common
             }
             throw new NotImplementedException("Should never happen");
         }
-
     }
 }

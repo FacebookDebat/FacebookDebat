@@ -1,0 +1,40 @@
+﻿
+
+    @model List<Dictionary<string, object>>
+
+    @{
+        ViewBag.Title = "Home Page";
+    }
+
+    <style>
+
+        .person {
+            font-weight: bold;
+        }
+
+    </style>
+    <br />
+    <table>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>
+                        <center>
+                            @(((DateTime)item["date"]).ToString("HH:mm")) <br /><br />
+                            @(item["score"])
+                        </center>
+                    </td>
+                    <td>
+                        <div class="person">@Html.ActionLink(item["post_name"].ToString(), "Page", "Politician", new { id = item["post_id"] }, new object())</div>
+                        @Lib.Cutoff(item["post"].ToString(), 50)
+                    </td>
+                    <td>
+                        <div class="person">@Html.ActionLink(item["commenter_name"].ToString(), "Page", "Commenter", new { id = item["commenter_id"] }, new object())</div>
+                        @item["comment"]
+                    </td>
+                </tr>
+            }
+            <tr></tr>
+        </tbody>
+    </table>

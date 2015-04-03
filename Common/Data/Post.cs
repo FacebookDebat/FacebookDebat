@@ -17,6 +17,7 @@ namespace Common.Data
         public Post()
         {
             this.Comments = new HashSet<Comment>();
+            this.PostLikes = new HashSet<PostLike>();
         }
     
         public int id { get; set; }
@@ -25,8 +26,11 @@ namespace Common.Data
         public Nullable<System.DateTime> date { get; set; }
         public bool scraped { get; set; }
         public string message { get; set; }
+        public Nullable<bool> deleted { get; set; }
+        public int shares { get; set; }
     
         public virtual ICollection<Comment> Comments { get; set; }
         public virtual Entity Entity { get; set; }
+        public virtual ICollection<PostLike> PostLikes { get; set; }
     }
 }

@@ -14,99 +14,110 @@ namespace Scraper
 {
     class CommentSplitter
     {
+        private static readonly log4net.ILog log = log4net.LogManager.GetLogger
+    (System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
         public static void SplitWords()
         {
-            Console.WriteLine("Splitting comments");
-            var newWords = new HashSet<string>();
-            var commentWords = new List<Tuple<int, string>>();
-
-            List<int> commentIDList;
-
             using (var db = new FacebookDebatEntities())
             {
-                Console.WriteLine("Initalizing word-list");
-                var seenWords = new HashSet<string>(db.Words.Select(x => x.word1));
-
-                db.Configuration.AutoDetectChangesEnabled = false;
-
-                Console.WriteLine("Finding un-splitted comments");
+                log.Info("Finding un-splitted comments");
                 var comments = db.Comments.Where(x => !x.splitted).Take(10000).ToList();
-                commentIDList = comments.Select(x => x.id).ToList();
 
-                Console.WriteLine("Splitting");
-                int i = 0;
+                var commentIds = string.Join(",", comments.Select(x => x.id.ToString()).ToArray());
+                var deleteWordsTask = Task.Factory.StartNew(() =>
+                {
+                    DatabaseTools.ExecuteNonQuery(string.Format("DELETE FROM CommentWords WHERE comment_id IN ({0})", commentIds));
+                    log.Info("Finished deleting words");
+                });
+
+                var deleteLinksTask = Task.Factory.StartNew(() =>
+                {
+                    DatabaseTools.ExecuteNonQuery(string.Format("DELETE FROM CommentLinks WHERE comment_id IN ({0})", commentIds));
+                    log.Info("Finished deleting links");
+                });
+
+                var commentWords = new List<Tuple<int, string>>();
+                var commentLinks = new List<Tuple<int, string>>();
+
+                log.Info("Building comment cache");
+                var wordCache = new UpdateOrInsertBuilder<Word>(db.Words, x => x.word1, (x, y) => false);
+
+                log.Info("Building link cache");
+                var linkCache = new UpdateOrInsertBuilder<Link>(db.Links, x => x.url, (x, y) => false);
+
+
+                log.Info("Splitting");
                 foreach (var comment in comments)
                 {
-                    if (i % 100 == 0)
-                        Console.WriteLine("Splitting comment " + i + "/" + comments.Count());
-                    i++;
+                    // Get links
+                    String commentWithoutLinks;
+                    var links = Tools.StripLinks(comment.message, out commentWithoutLinks);
+                    foreach (var link in links)
+                    {
+                        linkCache.Process(link, () => new Link() { url = link });
+                        commentLinks.Add(Tuple.Create(comment.id, link));
+                    }
 
-                    var words = Tools.SplitWords(comment.message.ToLower()).Where(x => !string.IsNullOrEmpty(x));
+                    // Get words from link-stripped comment
+                    var words = Tools.SplitWords(commentWithoutLinks.ToLower()).Where(x => !string.IsNullOrEmpty(x));
                     foreach (var word in words)
                     {
-                        if (word.Length >= 100)
+                        if (word.Length >= 100) // Longest possible word in DB
                         {
-                            Console.WriteLine("Ignoring " + word);
+                            log.Warn("Ignoring " + word);
                             continue;
                         }
 
-                        if (word.Any(x => char.IsDigit(x) || x == '_') || word.Length < 2)
+                        if (word.Any(x => char.IsDigit(x) || x == '_')) // no words with underscores or digits
                             continue;
 
-                        if (!seenWords.Contains(word))
-                        {
-                            newWords.Add(word);
-                            seenWords.Add(word);
-                        }
+                        if (word.Length < 2)
+                            continue;
+
+                        wordCache.Process(word, () => new Word() { word1 = word });
 
                         commentWords.Add(Tuple.Create(comment.id, word));
                     }
                 }
-            }
-            var connectionString = ConfigurationManager.ConnectionStrings["FacebookDebat"].ConnectionString;
 
-            // Delete old words.
-            Console.WriteLine("Cleaning up");
-            Parallel.ForEach(commentIDList, new ParallelOptions { MaxDegreeOfParallelism = 10 }, (commentId) =>
-            {
-                DatabaseTools.ExecuteNonQuery("DELETE FROM CommentWords WHERE comment_id = @id", new SqlParameter("id", commentId));
-            });
+                log.Info("Waiting for delete-tasks");
+                Task.WaitAll(deleteLinksTask, deleteWordsTask);
 
-            Console.WriteLine("Inserting " + newWords.Count + " new words");
-            DatabaseTools.BulkInsert("dbo.Words",
-                newWords.Select(x =>
-                    new
-                    {
-                        id = (int?)null,
-                        word = x
-                    }));
+                wordCache.SyncDatabase(2000, "dbo.Words", "id", (word) => new
+                {
+                    id = (int?)null,
+                    word = word.word1
+                });
 
-            // Add all commentWords
-            Console.WriteLine("Inserting " + commentWords.Count + " new comment-words");
-            int cnt = 0;
-            var commentWordChunks = commentWords.Chunk(2500);
-            var idTranslator = new FacebookDebatEntities().Words.ToDictionary(x => x.word1, x => x.id);
-            foreach (var chunk in commentWordChunks)
-            {
-                DatabaseTools.BulkInsert("dbo.CommentWords", chunk.Select(x => new
+                linkCache.SyncDatabase(2000, "dbo.Links", "id", (link) => new
+                {
+                    id = (int?)null,
+                    url = link.url
+                });
+
+                var linkTranslator = new FacebookDebatEntities().Links.ToDictionary(x => x.url, x => x.id);
+                DatabaseTools.ChunkInsert("dbo.CommentLinks", 10000, commentLinks.Select(x => new
                 {
                     id = (int?)null,
                     comment_id = x.Item1,
-                    word_id = idTranslator[x.Item2]
+                    link_id = linkTranslator[x.Item2]
                 }));
-                Interlocked.Add(ref cnt, chunk.Count());
-                Console.WriteLine("Inserted " + cnt + "/" + commentWords.Count + " commentwords");
-            }
 
-            Console.WriteLine("Marking splitted");
-            Parallel.ForEach(commentIDList, new ParallelOptions { MaxDegreeOfParallelism = 10 }, (id) =>
-            {
-                DatabaseTools.ExecuteNonQuery("update dbo.Comments set splitted = 1 where id = @id", new SqlParameter("id", id));
-            });
+                var wordTranslator = new FacebookDebatEntities().Words.ToDictionary(x => x.word1, x => x.id);
+                DatabaseTools.ChunkInsert("dbo.CommentWords", 20000, commentWords.Select(x => new
+                    {
+                        id = (int?)null,
+                        comment_id = x.Item1,
+                        word_id = wordTranslator[x.Item2]
+                    }));
+
+                log.Info("Marking splitted");
+                DatabaseTools.ExecuteNonQuery(string.Format("update dbo.Comments set splitted = 1 where id in ({0})", commentIds));
+            }
         }
 
         internal static void StemWords()
-        {
+        {/*
             using (var db = new FacebookDebatEntities())
             {
                 db.Database.CommandTimeout = 0;
@@ -135,7 +146,7 @@ namespace Scraper
                         }
                     }
                 });
-            }
+            }*/
         }
     }
 }

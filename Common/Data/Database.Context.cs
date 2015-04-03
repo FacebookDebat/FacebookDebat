@@ -25,11 +25,14 @@ namespace Common.Data
             throw new UnintentionalCodeFirstException();
         }
     
+        public virtual DbSet<CommentLink> CommentLinks { get; set; }
         public virtual DbSet<Comment> Comments { get; set; }
         public virtual DbSet<CommentWord> CommentWords { get; set; }
         public virtual DbSet<Entity> Entities { get; set; }
         public virtual DbSet<Post> Posts { get; set; }
         public virtual DbSet<Scrapee> Scrapees { get; set; }
         public virtual DbSet<Word> Words { get; set; }
+        public virtual DbSet<PostLike> PostLikes { get; set; }
+        public virtual DbSet<Link> Links { get; set; }
     }
 }

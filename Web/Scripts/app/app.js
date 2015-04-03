@@ -10,6 +10,7 @@ appRoot
             .when('/contact', { templateUrl: '/home/contact', controller: 'ContactController' })
             .when('/about', { templateUrl: '/home/about', controller: 'AboutController' })
             .when('/demo', { templateUrl: '/home/demo', controller: 'DemoController' })
+            .when('/feed', { templateUrl: '/home/feed', controller: 'FeedController' })
             .when('/angular', { templateUrl: '/home/angular' })
             .otherwise({ redirectTo: '/home' });
     }])

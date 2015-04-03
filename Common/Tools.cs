@@ -1,4 +1,5 @@
-﻿using System;
+﻿
+using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data.SqlClient;
@@ -41,5 +42,21 @@ namespace Common
                 source = source.Skip(chunksize);
             }
         }
+
+
+        static Regex url = new System.Text.RegularExpressions.Regex(@"((http|ftp|https):\/\/[\w\-_]+(\.[\w\-_]+)+([\w\-\.,@?^=%&amp;:/~\+#]*[\w\-\@?^=%&amp;/~\+#])?)", RegexOptions.Multiline);
+
+
+        public static List<string> StripLinks(string str, out string commentWithoutLinks)
+        {
+            var matches = url.Matches(str);
+
+            var newComment = url.Replace(str, "");
+            commentWithoutLinks = newComment;
+
+            return matches.Cast<Match>().Select(x => x.ToString()).ToList();
+        }
+
+
     }
 }

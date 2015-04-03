@@ -42,6 +42,9 @@
     <Reference Include="EntityFramework.SqlServer">
       <HintPath>..\packages\EntityFramework.6.1.1\lib\net45\EntityFramework.SqlServer.dll</HintPath>
     </Reference>
+    <Reference Include="log4net">
+      <HintPath>..\packages\log4net.2.0.3\lib\net40-full\log4net.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Configuration" />
@@ -59,6 +62,9 @@
     <Compile Include="DatabaseTools.cs" />
     <Compile Include="Data\Cache.cs" />
     <Compile Include="Data\Comment.cs">
+      <DependentUpon>Database.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Data\CommentLink.cs">
       <DependentUpon>Database.tt</DependentUpon>
     </Compile>
     <Compile Include="Data\CommentWord.cs">
@@ -82,7 +88,13 @@
     <Compile Include="Data\Entity.cs">
       <DependentUpon>Database.tt</DependentUpon>
     </Compile>
+    <Compile Include="Data\Link.cs">
+      <DependentUpon>Database.tt</DependentUpon>
+    </Compile>
     <Compile Include="Data\Post.cs">
+      <DependentUpon>Database.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Data\PostLike.cs">
       <DependentUpon>Database.tt</DependentUpon>
     </Compile>
     <Compile Include="Data\Scrapee.cs">

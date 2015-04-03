@@ -5,6 +5,14 @@
     <!-- SSDL content -->
     <edmx:StorageModels>
     <Schema Namespace="FacebookDebatModel.Store" Provider="System.Data.SqlClient" ProviderManifestToken="2012.Azure" Alias="Self" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm/ssdl">
+        <EntityType Name="CommentLinks">
+          <Key>
+            <PropertyRef Name="id" />
+          </Key>
+          <Property Name="id" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="comment_id" Type="int" Nullable="false" />
+          <Property Name="link_id" Type="int" Nullable="false" />
+        </EntityType>
         <EntityType Name="Comments">
           <Key>
             <PropertyRef Name="id" />
@@ -36,6 +44,21 @@
           <Property Name="name" Type="varchar" MaxLength="100" Nullable="false" />
           <Property Name="isPage" Type="bit" Nullable="false" />
         </EntityType>
+        <EntityType Name="Links">
+          <Key>
+            <PropertyRef Name="id" />
+          </Key>
+          <Property Name="id" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="url" Type="nvarchar" MaxLength="4000" Nullable="false" />
+        </EntityType>
+        <EntityType Name="PostLikes">
+          <Key>
+            <PropertyRef Name="id" />
+          </Key>
+          <Property Name="id" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="post_id" Type="int" Nullable="false" />
+          <Property Name="entity_id" Type="int" Nullable="false" />
+        </EntityType>
         <EntityType Name="Posts">
           <Key>
             <PropertyRef Name="id" />
@@ -46,6 +69,8 @@
           <Property Name="date" Type="datetime" />
           <Property Name="scraped" Type="bit" Nullable="false" />
           <Property Name="message" Type="ntext" Nullable="false" />
+          <Property Name="deleted" Type="bit" />
+          <Property Name="shares" Type="int" Nullable="false" />
         </EntityType>
         <EntityType Name="Scrapees">
           <Key>
@@ -75,6 +100,18 @@
             </Principal>
             <Dependent Role="Scrapees">
               <PropertyRef Name="entity_id" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_Comment">
+          <End Role="Comments" Type="Self.Comments" Multiplicity="1" />
+          <End Role="CommentLinks" Type="Self.CommentLinks" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Comments">
+              <PropertyRef Name="id" />
+            </Principal>
+            <Dependent Role="CommentLinks">
+              <PropertyRef Name="comment_id" />
             </Dependent>
           </ReferentialConstraint>
         </Association>
@@ -140,16 +177,59 @@
             </Dependent>
           </ReferentialConstraint>
         </Association>
+        <Association Name="FK_Links">
+          <End Role="Links" Type="Self.Links" Multiplicity="1" />
+          <End Role="CommentLinks" Type="Self.CommentLinks" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Links">
+              <PropertyRef Name="id" />
+            </Principal>
+            <Dependent Role="CommentLinks">
+              <PropertyRef Name="link_id" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_PostLike_Post">
+          <End Role="Posts" Type="Self.Posts" Multiplicity="1" />
+          <End Role="PostLikes" Type="Self.PostLikes" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Posts">
+              <PropertyRef Name="id" />
+            </Principal>
+            <Dependent Role="PostLikes">
+              <PropertyRef Name="post_id" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_PostLike_User">
+          <End Role="Entities" Type="Self.Entities" Multiplicity="1" />
+          <End Role="PostLikes" Type="Self.PostLikes" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Entities">
+              <PropertyRef Name="id" />
+            </Principal>
+            <Dependent Role="PostLikes">
+              <PropertyRef Name="entity_id" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
         <EntityContainer Name="FacebookDebatModelStoreContainer">
+          <EntitySet Name="CommentLinks" EntityType="Self.CommentLinks" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Comments" EntityType="Self.Comments" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="CommentWords" EntityType="Self.CommentWords" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Entities" EntityType="Self.Entities" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="Links" EntityType="Self.Links" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="PostLikes" EntityType="Self.PostLikes" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Posts" EntityType="Self.Posts" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Scrapees" EntityType="Self.Scrapees" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Words" EntityType="Self.Words" Schema="dbo" store:Type="Tables" />
           <AssociationSet Name="FK__Scrapees__entity__10566F31" Association="Self.FK__Scrapees__entity__10566F31">
             <End Role="Entities" EntitySet="Entities" />
             <End Role="Scrapees" EntitySet="Scrapees" />
+          </AssociationSet>
+          <AssociationSet Name="FK_Comment" Association="Self.FK_Comment">
+            <End Role="Comments" EntitySet="Comments" />
+            <End Role="CommentLinks" EntitySet="CommentLinks" />
           </AssociationSet>
           <AssociationSet Name="FK_Comment_Post" Association="Self.FK_Comment_Post">
             <End Role="Posts" EntitySet="Posts" />
@@ -171,18 +251,35 @@
             <End Role="Entities" EntitySet="Entities" />
             <End Role="Posts" EntitySet="Posts" />
           </AssociationSet>
+          <AssociationSet Name="FK_Links" Association="Self.FK_Links">
+            <End Role="Links" EntitySet="Links" />
+            <End Role="CommentLinks" EntitySet="CommentLinks" />
+          </AssociationSet>
+          <AssociationSet Name="FK_PostLike_Post" Association="Self.FK_PostLike_Post">
+            <End Role="Posts" EntitySet="Posts" />
+            <End Role="PostLikes" EntitySet="PostLikes" />
+          </AssociationSet>
+          <AssociationSet Name="FK_PostLike_User" Association="Self.FK_PostLike_User">
+            <End Role="Entities" EntitySet="Entities" />
+            <End Role="PostLikes" EntitySet="PostLikes" />
+          </AssociationSet>
         </EntityContainer>
       </Schema></edmx:StorageModels>
     <!-- CSDL content -->
     <edmx:ConceptualModels>
       <Schema Namespace="FacebookDebatModel" Alias="Self" annotation:UseStrongSpatialTypes="false" xmlns:annotation="http://schemas.microsoft.com/ado/2009/02/edm/annotation" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm">
         <EntityContainer Name="FacebookDebatEntities" annotation:LazyLoadingEnabled="true">
+          <EntitySet Name="CommentLinks" EntityType="FacebookDebatModel.CommentLink" />
           <EntitySet Name="Comments" EntityType="FacebookDebatModel.Comment" />
           <EntitySet Name="CommentWords" EntityType="FacebookDebatModel.CommentWord" />
           <EntitySet Name="Entities" EntityType="FacebookDebatModel.Entity" />
           <EntitySet Name="Posts" EntityType="FacebookDebatModel.Post" />
           <EntitySet Name="Scrapees" EntityType="FacebookDebatModel.Scrapee" />
           <EntitySet Name="Words" EntityType="FacebookDebatModel.Word" />
+          <AssociationSet Name="FK_Comment" Association="FacebookDebatModel.FK_Comment">
+            <End Role="Comment" EntitySet="Comments" />
+            <End Role="CommentLink" EntitySet="CommentLinks" />
+          </AssociationSet>
           <AssociationSet Name="FK_Comment_Post" Association="FacebookDebatModel.FK_Comment_Post">
             <End Role="Post" EntitySet="Posts" />
             <End Role="Comment" EntitySet="Comments" />
@@ -207,7 +304,31 @@
             <End Role="Entity" EntitySet="Entities" />
             <End Role="Post" EntitySet="Posts" />
           </AssociationSet>
-        </EntityContainer>
+          <EntitySet Name="PostLikes" EntityType="FacebookDebatModel.PostLike" />
+          <AssociationSet Name="FK_PostLike_User" Association="FacebookDebatModel.FK_PostLike_User">
+            <End Role="Entity" EntitySet="Entities" />
+            <End Role="PostLike" EntitySet="PostLikes" />
+          </AssociationSet>
+          <AssociationSet Name="FK_PostLike_Post" Association="FacebookDebatModel.FK_PostLike_Post">
+            <End Role="Post" EntitySet="Posts" />
+            <End Role="PostLike" EntitySet="PostLikes" />
+          </AssociationSet>
+          <EntitySet Name="Links" EntityType="FacebookDebatModel.Link" />
+          <AssociationSet Name="FK_Links" Association="FacebookDebatModel.FK_Links">
+            <End Role="Link" EntitySet="Links" />
+            <End Role="CommentLink" EntitySet="CommentLinks" />
+          </AssociationSet>
+          </EntityContainer>
+        <EntityType Name="CommentLink">
+          <Key>
+            <PropertyRef Name="id" />
+          </Key>
+          <Property Name="id" Type="Int32" Nullable="false" />
+          <Property Name="comment_id" Type="Int32" Nullable="false" />
+          <Property Name="link_id" Type="Int32" Nullable="false" />
+          <NavigationProperty Name="Comment" Relationship="FacebookDebatModel.FK_Comment" FromRole="CommentLink" ToRole="Comment" />
+          <NavigationProperty Name="Link" Relationship="FacebookDebatModel.FK_Links" FromRole="CommentLink" ToRole="Link" />
+        </EntityType>
         <EntityType Name="Comment">
           <Key>
             <PropertyRef Name="id" />
@@ -220,10 +341,11 @@
           <Property Name="score" Type="Double" />
           <Property Name="scored" Type="Boolean" Nullable="false" />
           <Property Name="message" Type="String" Nullable="false" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="splitted" Type="Boolean" Nullable="false" />
+          <NavigationProperty Name="CommentLinks" Relationship="FacebookDebatModel.FK_Comment" FromRole="Comment" ToRole="CommentLink" />
           <NavigationProperty Name="Post" Relationship="FacebookDebatModel.FK_Comment_Post" FromRole="Comment" ToRole="Post" />
           <NavigationProperty Name="Entity" Relationship="FacebookDebatModel.FK_Comment_User" FromRole="Comment" ToRole="Entity" />
           <NavigationProperty Name="CommentWords" Relationship="FacebookDebatModel.FK_CommentWords_Comment" FromRole="Comment" ToRole="CommentWord" />
-          <Property Name="splitted" Type="Boolean" Nullable="false" />
         </EntityType>
         <EntityType Name="CommentWord">
           <Key>
@@ -246,6 +368,7 @@
           <NavigationProperty Name="Comments" Relationship="FacebookDebatModel.FK_Comment_User" FromRole="Entity" ToRole="Comment" />
           <NavigationProperty Name="Scrapees" Relationship="FacebookDebatModel.FK__Scrapees__entity__10566F31" FromRole="Entity" ToRole="Scrapee" />
           <NavigationProperty Name="Posts" Relationship="FacebookDebatModel.FK_Entity_Post" FromRole="Entity" ToRole="Post" />
+          <NavigationProperty Name="PostLikes" Relationship="FacebookDebatModel.FK_PostLike_User" FromRole="Entity" ToRole="PostLike" />
         </EntityType>
         <EntityType Name="Post">
           <Key>
@@ -257,8 +380,11 @@
           <Property Name="date" Type="DateTime" Precision="3" />
           <Property Name="scraped" Type="Boolean" Nullable="false" />
           <Property Name="message" Type="String" Nullable="false" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="deleted" Type="Boolean" />
           <NavigationProperty Name="Comments" Relationship="FacebookDebatModel.FK_Comment_Post" FromRole="Post" ToRole="Comment" />
           <NavigationProperty Name="Entity" Relationship="FacebookDebatModel.FK_Entity_Post" FromRole="Post" ToRole="Entity" />
+          <Property Name="shares" Type="Int32" Nullable="false" />
+          <NavigationProperty Name="PostLikes" Relationship="FacebookDebatModel.FK_PostLike_Post" FromRole="Post" ToRole="PostLike" />
         </EntityType>
         <EntityType Name="Scrapee">
           <Key>
@@ -277,10 +403,22 @@
           </Key>
           <Property Name="id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
           <Property Name="word1" Type="String" Nullable="false" MaxLength="100" FixedLength="false" Unicode="true" />
-          <NavigationProperty Name="CommentWords" Relationship="FacebookDebatModel.FK_CommentWords_Words" FromRole="Word" ToRole="CommentWord" />
           <Property Name="stop" Type="Boolean" Nullable="false" />
           <Property Name="stem_id" Type="Int32" />
+          <NavigationProperty Name="CommentWords" Relationship="FacebookDebatModel.FK_CommentWords_Words" FromRole="Word" ToRole="CommentWord" />
         </EntityType>
+        <Association Name="FK_Comment">
+          <End Type="FacebookDebatModel.Comment" Role="Comment" Multiplicity="1" />
+          <End Type="FacebookDebatModel.CommentLink" Role="CommentLink" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Comment">
+              <PropertyRef Name="id" />
+            </Principal>
+            <Dependent Role="CommentLink">
+              <PropertyRef Name="comment_id" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
         <Association Name="FK_Comment_Post">
           <End Type="FacebookDebatModel.Post" Role="Post" Multiplicity="1" />
           <End Type="FacebookDebatModel.Comment" Role="Comment" Multiplicity="*" />
@@ -355,12 +493,75 @@
             </Dependent>
           </ReferentialConstraint>
         </Association>
+        <EntityType Name="PostLike">
+          <Key>
+            <PropertyRef Name="id" />
+          </Key>
+          <Property Name="id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="post_id" Type="Int32" Nullable="false" />
+          <Property Name="entity_id" Type="Int32" Nullable="false" />
+          <NavigationProperty Name="Entity" Relationship="FacebookDebatModel.FK_PostLike_User" FromRole="PostLike" ToRole="Entity" />
+          <NavigationProperty Name="Post" Relationship="FacebookDebatModel.FK_PostLike_Post" FromRole="PostLike" ToRole="Post" />
+        </EntityType>
+        <Association Name="FK_PostLike_User">
+          <End Type="FacebookDebatModel.Entity" Role="Entity" Multiplicity="1" />
+          <End Type="FacebookDebatModel.PostLike" Role="PostLike" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Entity">
+              <PropertyRef Name="id" />
+            </Principal>
+            <Dependent Role="PostLike">
+              <PropertyRef Name="entity_id" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_PostLike_Post">
+          <End Type="FacebookDebatModel.Post" Role="Post" Multiplicity="1" />
+          <End Type="FacebookDebatModel.PostLike" Role="PostLike" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Post">
+              <PropertyRef Name="id" />
+            </Principal>
+            <Dependent Role="PostLike">
+              <PropertyRef Name="post_id" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <EntityType Name="Link">
+          <Key>
+            <PropertyRef Name="id" />
+          </Key>
+          <Property Name="id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="url" Type="String" Nullable="false" MaxLength="4000" FixedLength="false" Unicode="true" />
+          <NavigationProperty Name="CommentLinks" Relationship="FacebookDebatModel.FK_Links" FromRole="Link" ToRole="CommentLink" />
+        </EntityType>
+        <Association Name="FK_Links">
+          <End Type="FacebookDebatModel.Link" Role="Link" Multiplicity="1" />
+          <End Type="FacebookDebatModel.CommentLink" Role="CommentLink" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Link">
+              <PropertyRef Name="id" />
+            </Principal>
+            <Dependent Role="CommentLink">
+              <PropertyRef Name="link_id" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
         </Schema>
     </edmx:ConceptualModels>
     <!-- C-S mapping content -->
     <edmx:Mappings>
       <Mapping Space="C-S" xmlns="http://schemas.microsoft.com/ado/2009/11/mapping/cs">
         <EntityContainerMapping StorageEntityContainer="FacebookDebatModelStoreContainer" CdmEntityContainer="FacebookDebatEntities">
+          <EntitySetMapping Name="CommentLinks">
+            <EntityTypeMapping TypeName="FacebookDebatModel.CommentLink">
+              <MappingFragment StoreEntitySet="CommentLinks">
+                <ScalarProperty Name="link_id" ColumnName="link_id" />
+                <ScalarProperty Name="comment_id" ColumnName="comment_id" />
+                <ScalarProperty Name="id" ColumnName="id" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
           <EntitySetMapping Name="Comments">
             <EntityTypeMapping TypeName="FacebookDebatModel.Comment">
               <MappingFragment StoreEntitySet="Comments">
@@ -398,6 +599,8 @@
           <EntitySetMapping Name="Posts">
             <EntityTypeMapping TypeName="FacebookDebatModel.Post">
               <MappingFragment StoreEntitySet="Posts">
+                <ScalarProperty Name="shares" ColumnName="shares" />
+                <ScalarProperty Name="deleted" ColumnName="deleted" />
                 <ScalarProperty Name="message" ColumnName="message" />
                 <ScalarProperty Name="scraped" ColumnName="scraped" />
                 <ScalarProperty Name="date" ColumnName="date" />
@@ -424,6 +627,23 @@
                 <ScalarProperty Name="stem_id" ColumnName="stem_id" />
                 <ScalarProperty Name="stop" ColumnName="stop" />
                 <ScalarProperty Name="word1" ColumnName="word" />
+                <ScalarProperty Name="id" ColumnName="id" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="PostLikes">
+            <EntityTypeMapping TypeName="FacebookDebatModel.PostLike">
+              <MappingFragment StoreEntitySet="PostLikes">
+                <ScalarProperty Name="entity_id" ColumnName="entity_id" />
+                <ScalarProperty Name="post_id" ColumnName="post_id" />
+                <ScalarProperty Name="id" ColumnName="id" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="Links">
+            <EntityTypeMapping TypeName="FacebookDebatModel.Link">
+              <MappingFragment StoreEntitySet="Links">
+                <ScalarProperty Name="url" ColumnName="url" />
                 <ScalarProperty Name="id" ColumnName="id" />
               </MappingFragment>
             </EntityTypeMapping>

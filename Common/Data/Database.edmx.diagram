@@ -4,20 +4,27 @@
   <edmx:Designer xmlns="http://schemas.microsoft.com/ado/2009/11/edmx">
     <!-- Diagram content (shape and connector positions) -->
     <edmx:Diagrams>
-      <Diagram DiagramId="cb2fce1e1fe1484082e4b4d5f26d702c" Name="Diagram1">
-        <EntityTypeShape EntityType="FacebookDebatModel.Comment" Width="1.5" PointX="5.25" PointY="7.125" />
-        <EntityTypeShape EntityType="FacebookDebatModel.CommentWord" Width="1.5" PointX="7.5" PointY="7.75" />
-        <EntityTypeShape EntityType="FacebookDebatModel.Entity" Width="1.5" PointX="0.75" PointY="4.75" />
-        <EntityTypeShape EntityType="FacebookDebatModel.Post" Width="1.5" PointX="3" PointY="10" />
-        <EntityTypeShape EntityType="FacebookDebatModel.Scrapee" Width="1.5" PointX="3" PointY="3.25" />
-        <EntityTypeShape EntityType="FacebookDebatModel.Word" Width="1.5" PointX="5.25" PointY="3.875" />
+      <Diagram DiagramId="cb2fce1e1fe1484082e4b4d5f26d702c" Name="Diagram1" ZoomLevel="72">
+        <EntityTypeShape EntityType="FacebookDebatModel.CommentLink" Width="1.5" PointX="7.5" PointY="7.5" />
+        <EntityTypeShape EntityType="FacebookDebatModel.Comment" Width="1.5" PointX="5.25" PointY="6.75" />
+        <EntityTypeShape EntityType="FacebookDebatModel.CommentWord" Width="1.5" PointX="7.5" PointY="4.5" />
+        <EntityTypeShape EntityType="FacebookDebatModel.Entity" Width="1.5" PointX="0.75" PointY="5.75" />
+        <EntityTypeShape EntityType="FacebookDebatModel.Post" Width="1.5" PointX="3" PointY="8.375" />
+        <EntityTypeShape EntityType="FacebookDebatModel.Scrapee" Width="1.5" PointX="3" PointY="11.875" />
+        <EntityTypeShape EntityType="FacebookDebatModel.Word" Width="1.5" PointX="5.25" PointY="3.5" />
+        <AssociationConnector Association="FacebookDebatModel.FK_Comment" />
         <AssociationConnector Association="FacebookDebatModel.FK_Comment_Post" />
         <AssociationConnector Association="FacebookDebatModel.FK_Comment_User" />
         <AssociationConnector Association="FacebookDebatModel.FK_CommentWords_Comment" />
         <AssociationConnector Association="FacebookDebatModel.FK_CommentWords_Words" />
         <AssociationConnector Association="FacebookDebatModel.FK__Scrapees__entity__10566F31" />
         <AssociationConnector Association="FacebookDebatModel.FK_Entity_Post" />
-      </Diagram>
+        <EntityTypeShape EntityType="FacebookDebatModel.PostLike" Width="1.5" PointX="8.25" PointY="10.625" />
+        <AssociationConnector Association="FacebookDebatModel.FK_PostLike_User" />
+        <AssociationConnector Association="FacebookDebatModel.FK_PostLike_Post" />
+        <EntityTypeShape EntityType="FacebookDebatModel.Link" Width="1.5" PointX="0.75" PointY="0.875" />
+        <AssociationConnector Association="FacebookDebatModel.FK_Links" />
+        </Diagram>
     </edmx:Diagrams>
   </edmx:Designer>
 </edmx:Edmx>

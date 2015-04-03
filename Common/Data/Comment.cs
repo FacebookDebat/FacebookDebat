@@ -16,6 +16,7 @@ namespace Common.Data
     {
         public Comment()
         {
+            this.CommentLinks = new HashSet<CommentLink>();
             this.CommentWords = new HashSet<CommentWord>();
         }
     
@@ -29,6 +30,7 @@ namespace Common.Data
         public string message { get; set; }
         public bool splitted { get; set; }
     
+        public virtual ICollection<CommentLink> CommentLinks { get; set; }
         public virtual Post Post { get; set; }
         public virtual Entity Entity { get; set; }
         public virtual ICollection<CommentWord> CommentWords { get; set; }
