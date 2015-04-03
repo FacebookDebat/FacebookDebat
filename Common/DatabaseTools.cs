@@ -106,7 +106,8 @@ namespace Common
                         var obj = new Dictionary<string, object>();
                         for (int field = 0; field < reader.FieldCount; field++)
                         {
-                            obj[reader.GetName(field)] = reader.GetValue(field);
+                            var fld = reader.GetValue(field);
+                            obj[reader.GetName(field)] = fld == DBNull.Value ? null : fld;
                         }
                         rv.Add(obj);
                     }
