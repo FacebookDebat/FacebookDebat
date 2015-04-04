@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Web;
 using System.Web.Http;
 using System.Web.Mvc;
@@ -14,6 +15,12 @@ namespace Web
 
     public class MvcApplication : System.Web.HttpApplication
     {
+        public static Timer cacheRefresher = new Timer((a) => {
+            cache = refreshCache();
+        }, null, 0, 1*60*1000);
+        public static IEnumerable<Dictionary<string, object>> cache;
+        public static Func<IEnumerable<Dictionary<string, object>>> refreshCache;
+
         protected void Application_Start()
         {
             AreaRegistration.RegisterAllAreas();

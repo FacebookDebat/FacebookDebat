@@ -1,4 +1,6 @@
-﻿.clearfix:after {
+﻿/* http://codepen.io/AtomicNoggin/pen/fEish
+    */
+.clearfix:after {
     content: ".";
     display: block;
     clear: both;
@@ -41,6 +43,34 @@ div.commentfeed {
 .commentfeed div.feeditem div.txt {
     clear: left;
     float: left;
+}
+
+.commentfeed div.feeditem div.bar {
+    float:right;
+    width: 100px;
+    padding-top: 5px;
+}
+.commentfeed div.feeditem div.likecount {
+    padding-top: 1px;
+    float:right;
+}
+.commentfeed div.feeditem div.bar div {
+    height: 10px;
+    padding: 0px;
+    margin: 0px;
+}
+
+.commentfeed div.feeditem div.redbar {
+    background-color: red;
+    width: 50%;
+    float: left;
+    clear: none;
+}
+.commentfeed div.feeditem div.bluebar {
+    background-color: blue;
+    width: 50%;
+    float: left;
+    clear: none;
 }
 
 .commentfeed div.feeditem div {
@@ -129,4 +159,29 @@ body {
 .gender-text {
     margin: 0 5px;
     vertical-align: sub;
+}
+
+
+.postFeed .bar {
+    padding-top: 4px;
+    float: right;
+    width: 100px;
+    height: 10px;
+}
+
+.postFeed .bar div {
+    height: 10px;
+    padding: 0px;
+    margin: 0px;
+    float: right;
+}
+
+.postFeed .bar .rod {
+    background-color: red;
+}
+.postFeed .bar .midt {
+    background-color: lightgray;
+}
+.postFeed .bar .bla {
+    background-color: blue;
 }

@@ -114,6 +114,36 @@ namespace Scraper
             StartRepeatingTask(getLikes, () => ScrapePosts(fb, lookbackDays, maxUnscrapedPosts, dailyScraping, true, false, entityUpdater), likeScrapeInterval);
             StartRepeatingTask(splitComments, () => CommentSplitter.SplitWords(), splitCommentInterval);
 
+            StartRepeatingTask(true, () =>
+            {
+                log.Info("Aggregating likes");
+                DatabaseTools.ExecuteNonQuery(@"update e set 
+	                                                blalikes = a.blalikes,
+	                                                rodlikes = a.rodlikes
+                                                from dbo.Entities e
+                                                left join dbo.Scrapees s on e.id = s.entity_id
+                                                left join (
+                                                select
+	                                                c.entity_id,
+                                                    sum(case when s.Blok = 'Blå' then 1 else 0 end) as blalikes,
+                                                    sum(case when s.Blok = 'Rød' then 1 else 0 end) as rodlikes
+                                                from Comments c 
+                                                inner join Posts p on c.post_id = p.id
+                                                inner join Scrapees s on s.entity_id = p.entity_id
+                                                group by c.entity_id
+                                                ) a on a.entity_id = e.id
+                                                where s.entity_id is null");
+                log.Info("Concluding blocks");
+                DatabaseTools.ExecuteNonQuery(@"update e
+                                                set blok = IIF(ratio >= 65, 'Rød', IIF(ratio <= 35, 'Blå', 'Midt'))
+                                                from Entities e
+                                                inner join (
+	                                                select id, rodlikes, blalikes, rodlikes*100/(rodlikes+blalikes) as ratio
+                                                    from Entities
+                                                ) a on e.id= a.id
+                                                where (e.rodlikes+e.blalikes) > 4");
+            }, 10*60);
+
             Console.ReadLine();
         }
 

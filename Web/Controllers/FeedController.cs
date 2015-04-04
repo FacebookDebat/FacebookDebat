@@ -15,7 +15,7 @@ namespace Web.Controllers
         {
             if (lookback == null)
             {
-                return DatabaseTools.ExecuteReader(@"select top 100 c.id as comment_id, c.message as comment, p.message as post, c.date, ce.name as commenter_name, ce.id as commenter_id, pe.name as post_name, pe.id as post_id, c.score
+                return DatabaseTools.ExecuteReader(@"select top 100 c.id as comment_id, c.message as comment, p.message as post, c.date, ce.name as commenter_name, ce.id as commenter_id, pe.name as post_name, pe.id as post_id, c.score, ce.blalikes, ce.rodlikes
                                     from dbo.Comments c
                                     inner join dbo.Posts p on c.post_id = p.id
                                     inner join dbo.Entities ce on c.entity_id = ce.id
@@ -24,7 +24,7 @@ namespace Web.Controllers
             }
             else
             {
-                return DatabaseTools.ExecuteReader(@"select top 100 c.id as comment_id, c.message as comment, p.message as post, c.date, ce.name as commenter_name, ce.id as commenter_id, pe.name as post_name, pe.id as post_id, c.score
+                return DatabaseTools.ExecuteReader(@"select top 100 c.id as comment_id, c.message as comment, p.message as post, c.date, ce.name as commenter_name, ce.id as commenter_id, pe.name as post_name, pe.id as post_id, c.score, ce.blalikes, ce.rodlikes
                                     from dbo.Comments c
                                     inner join dbo.Posts p on c.post_id = p.id
                                     inner join dbo.Entities ce on c.entity_id = ce.id
@@ -37,12 +37,29 @@ namespace Web.Controllers
         [HttpGet]
         public IEnumerable<Dictionary<string, object>> Posts()
         {
-            return DatabaseTools.ExecuteReader(@"select top 100 (select message from Posts where id = p.id) as message, max(pc.date) as last_comment, p.date as post_date, pe.name as post_name, pe.id as poster_id, count(distinct pc.id) as comments, (select count(*) from PostLikes where post_id = p.id) as likes
+            if (MvcApplication.cache == null)
+            {
+                MvcApplication.refreshCache = Posts;
+                MvcApplication.cache = DatabaseTools.ExecuteReader(@"select top 100
+                                        (select message from Posts where id = p.id) as message,
+                                        max(pc.date) as last_comment,
+                                        p.date as post_date,
+                                        pe.name as post_name,
+                                        pe.id as poster_id,
+                                        count(distinct pc.id) as comments,
+                                        (select count(*) from PostLikes pl where post_id = p.id) as likes,
+                                        (select count(*) from PostLikes pl inner join Entities e on pl.entity_id = e.id where post_id = p.id and blok ='Blå') as blablok,
+                                        (select count(*) from PostLikes pl inner join Entities e on pl.entity_id = e.id where post_id = p.id and blok ='Rød') as rodblok,
+                                        (select count(*) from PostLikes pl inner join Entities e on pl.entity_id = e.id where post_id = p.id and blok ='Midt') as midtblok,
+                                        (select count(*) from PostLikes pl inner join Entities e on pl.entity_id = e.id where post_id = p.id and blok is null) as noblok
                                     from dbo.Posts p 
                                     inner join dbo.Entities pe on p.entity_id = pe.id
                                     inner join dbo.Comments pc on pc.post_id = p.id
 									group by p.id, pe.id, pe.name, p.date
                                     order by max(pc.date) desc");
+            }
+
+            return MvcApplication.cache;
         }
     }
 }

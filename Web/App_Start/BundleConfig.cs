@@ -47,7 +47,9 @@ namespace Web
                 ));
 
 
-            bundles.Add(new StyleBundle("~/Content/css").Include("~/Content/site.css",
+            bundles.Add(new StyleBundle("~/Content/css").Include(
+                "~/Content/site.css",
+                "~/Content/pie.css",
                 "~/Content/ng-grid.css"));
 
             bundles.Add(new StyleBundle("~/Content/themes/base/css").Include(

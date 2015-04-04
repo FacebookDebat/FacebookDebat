@@ -11,6 +11,11 @@
             <div class="time"><span>Skrevet kl.</span> {{post.post_date | date:'HH:mm'}}. Sidste kommentar kl. {{post.last_comment | date:'HH:mm'}}.</div>
             <div class="likes"><span>Likes:</span> {{post.likes}}</div>
             <div class="comments"><span>Comments:</span> {{post.comments}}</div>
+            <div class="bar">
+                <div class="rod" ng-style="{width: {{post.rodblok*100/(post.blablok+post.rodblok+post.midtblok)}} + '%'}"></div>
+                <div class="midt" ng-style="{width: {{post.midtblok*100/(post.blablok+post.rodblok+post.midtblok)}} + '%'}"></div>
+                <div class="bla" ng-style="{width: {{post.blablok*100/(post.blablok+post.rodblok+post.midtblok)}} + '%'}"></div>
+            </div>
             <div class="post">{{post.message}}</div>
         </div>
         <div class="clearfix"></div>

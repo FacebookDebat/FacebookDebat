@@ -7,7 +7,7 @@
         });
     });
 
-    (serviceTick = function () {
+/*    (serviceTick = function () {
         $timeout(function () {
             feedResource.query(function (data) {
                 debugger;
@@ -18,5 +18,5 @@
             });
             serviceTick();
         }, 5000)
-    })();
+    })();*/
 });
