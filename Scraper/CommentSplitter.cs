@@ -34,7 +34,8 @@ namespace Scraper
 
                 var deleteLinksTask = Task.Factory.StartNew(() =>
                 {
-                    DatabaseTools.ExecuteNonQuery(string.Format("DELETE FROM CommentLinks WHERE comment_id IN ({0})", commentIds));
+                    if (commentIds.Count() != 0)
+                        DatabaseTools.ExecuteNonQuery(string.Format("DELETE FROM CommentLinks WHERE comment_id IN ({0})", commentIds));
                     log.Info("Finished deleting links");
                 });
 

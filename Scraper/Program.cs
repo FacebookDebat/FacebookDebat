@@ -21,23 +21,29 @@ namespace Scraper
     {
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
-        static void Main(string[] args)
+        public static void CatchWithoutDebug(Action f)
         {
             if (System.Diagnostics.Debugger.IsAttached)
             {
-                Start(args);
+                f();
             }
             else
             {
                 try
                 {
-                    Start(args);
+                    f();
                 }
                 catch (Exception e)
                 {
                     log.Error("Unhandled", e);
                 }
             }
+        }
+
+
+        static void Main(string[] args)
+        {
+            CatchWithoutDebug(() => Start(args));
 
             if (System.Diagnostics.Debugger.IsAttached)
             {
@@ -51,45 +57,64 @@ namespace Scraper
 
             int lookbackDays = int.Parse(ConfigurationManager.AppSettings["LookbackDays"]);
             int maxUnscrapedPosts = int.Parse(ConfigurationManager.AppSettings["MaxUnscrapedPosts"]);
-            bool getNames = bool.Parse(ConfigurationManager.AppSettings["GetNames"]);
-            bool getPosts = bool.Parse(ConfigurationManager.AppSettings["GetPosts"]);
-            bool getComments = bool.Parse(ConfigurationManager.AppSettings["GetComments"]);
             bool dailyScraping = bool.Parse(ConfigurationManager.AppSettings["DailyScraping"]);
+
+            bool getNames = bool.Parse(ConfigurationManager.AppSettings["GetNames"]);
+            int nameScrapeInterval = int.Parse(ConfigurationManager.AppSettings["NameScrapeInterval"]);
+
+            bool getPosts = bool.Parse(ConfigurationManager.AppSettings["GetPosts"]);
+            int postScrapeInterval = int.Parse(ConfigurationManager.AppSettings["PostScrapeInterval"]);
+
+            bool getComments = bool.Parse(ConfigurationManager.AppSettings["GetComments"]);
+            int commentScrapeInterval = int.Parse(ConfigurationManager.AppSettings["CommentScrapeInterval"]);
+
+            bool getLikes = bool.Parse(ConfigurationManager.AppSettings["GetLikes"]);
+            int likeScrapeInterval = int.Parse(ConfigurationManager.AppSettings["LikeScrapeInterval"]);
+
             bool splitComments = bool.Parse(ConfigurationManager.AppSettings["SplitComments"]);
-            bool stemWords = bool.Parse(ConfigurationManager.AppSettings["StemWords"]);
+            int splitCommentInterval = int.Parse(ConfigurationManager.AppSettings["SplitCommentInterval"]);
 
-            if (getNames)
-                GetScrapees(fb);
-            if (getPosts)
+            Func<bool, Action, int, Task> StartRepeatingTask = (doIt, function, interval) =>
             {
-                var date = DateTime.Now;
-                if (args.Length == 1)
-                    date = DateTime.ParseExact(args[0], "yyyyMMdd", CultureInfo.InvariantCulture);
-                GetPosts(fb, lookbackDays, date);
-            }
-            if (getComments)
-                ScrapePosts(fb, lookbackDays, maxUnscrapedPosts, dailyScraping);
-            if (splitComments)
-                CommentSplitter.SplitWords();
-            if (stemWords)
-                CommentSplitter.StemWords();
-
+                return Task.Run(() =>
+                {
+                    if (doIt)
+                    {
+                        while (true)
+                        {
+                            CatchWithoutDebug(() => function());
+                            Thread.Sleep(interval * 1000);
+                        }
+                    }
+                });
+            };
+            UpdateOrInsertBuilder<Entity> entityUpdater;
+            log.Info("Initializing Entity cache");
             using (var db = new FacebookDebatEntities())
             {
-                var unclassifiedComments = db.Comments.Where(x => !x.scored).ToList();
-                if (unclassifiedComments.Count > 0)
-                {
-                    log.Info("Reclassifying " + unclassifiedComments.Count + " comments");
-                    Parallel.ForEach(unclassifiedComments, (comment) =>
+                entityUpdater = new UpdateOrInsertBuilder<Entity>(
+                    AlreadyExists: db.Entities,
+                    GetKey: x => x.fb_id,
+                    Updater: (dbItem, memItem) =>
                     {
-                        DatabaseTools.ExecuteNonQuery("update dbo.comments set scored = 1, score = @score where id = @id",
-                            new SqlParameter("score", Classifier.Classify(comment.message)),
-                            new SqlParameter("id", comment.id));
-                    });
-                }
+                        if (dbItem.name != memItem.name)
+                        {
+                            dbItem.name = memItem.name;
+                            return true;
+                        }
+                        return false;
+                    }
+                );
             }
+            log.Info("Done");
 
-            log.Info("Finished.");
+            StartRepeatingTask(getNames, () => GetScrapees(fb), nameScrapeInterval);
+            StartRepeatingTask(getPosts, () => GetPosts(fb, lookbackDays, DateTime.Now), postScrapeInterval);
+            StartRepeatingTask(getComments, () => ScrapePosts(fb, lookbackDays, maxUnscrapedPosts, dailyScraping, false, true, entityUpdater), commentScrapeInterval);
+            StartRepeatingTask(getLikes, () => ScrapePosts(fb, lookbackDays, maxUnscrapedPosts, dailyScraping, true, false, entityUpdater), likeScrapeInterval);
+            StartRepeatingTask(splitComments, () => CommentSplitter.SplitWords(), splitCommentInterval);
+
+            Console.ReadLine();
         }
 
         private static void GetScrapees(Facebook fb)
@@ -186,9 +211,13 @@ namespace Scraper
             }
         }
 
-        private static void ScrapePosts(Facebook fb, int lookBackDays, int maxUnscrapedPosts, bool dailyScraping)
+        private static void ScrapePosts(Facebook fb, int lookBackDays, int maxUnscrapedPosts, bool dailyScraping, bool scrapeLikes, bool scrapeComments, UpdateOrInsertBuilder<Entity> entityUpdater)
         {
             log.Info("Scraping posts");
+            if (scrapeLikes)
+                log.Info("Scraping for likes");
+            if (scrapeComments)
+                log.Info("Scraping for comments");
             using (var db = new FacebookDebatEntities())
             {
 
@@ -212,14 +241,14 @@ namespace Scraper
 
                 log.Info("Found " + posts.Count + " posts");
 
-                foreach (var postChunk in posts.Chunk(130))
+                foreach (var postChunk in posts.Chunk(50))
                 {
                     var scrapedPosts = new List<Post>();
 
                     #region Scrape Comments from FB
                     List<Facebook.Comment> postComments = new List<Facebook.Comment>();
                     List<Facebook.PostLike> postLikes = new List<Facebook.PostLike>();
-                    log.Info("Getting comments and likes from " + postChunk.Count() + " post");
+                    log.Info("Getting from " + postChunk.Count() + " post");
                     var fbFailed = false;
                     Parallel.ForEach(postChunk, (post) =>
                     {
@@ -228,8 +257,8 @@ namespace Scraper
 
                         try
                         {
-                            var comments = Task.Run(() => fb.GetComments(post.fb_id));
-                            var likes = Task.Run(() => fb.GetLikes(post.fb_id));
+                            var comments = Task.Run(() => scrapeComments ? fb.GetComments(post.fb_id) : new List<Facebook.Comment>());
+                            var likes = Task.Run(() => scrapeLikes ? fb.GetLikes(post.fb_id) : new List<Facebook.PostLike>());
                             comments.Wait();
                             likes.Wait();
                             lock (postComments)
@@ -251,20 +280,6 @@ namespace Scraper
                     #endregion
 
                     #region Update Entities
-                    var entityUpdater = new UpdateOrInsertBuilder<Entity>(
-                        AlreadyExists: db.Entities,
-                        GetKey: x => x.fb_id,
-                        Updater: (dbItem, memItem) =>
-                        {
-                            if (dbItem.name != memItem.name)
-                            {
-                                dbItem.name = memItem.name;
-                                return true;
-                            }
-                            return false;
-                        }
-                    );
-
                     foreach (var comment in postComments)
                     {
                         entityUpdater.Process(comment.user_id, () => new Entity
@@ -289,12 +304,17 @@ namespace Scraper
                     });
                     #endregion
 
-                    var postTranslator = db.Posts.ToDictionary(x => x.fb_id, x => x.id);
-                    var entityTranslator = db.Entities.ToDictionary(x => x.fb_id, x => x.id);
+                    log.Info("Intializing post-cache");
+                    var postTranslator = DatabaseTools.ExecuteDictionaryReader("select fb_id, id from dbo.Posts", (x) => (string)x["fb_id"], x => (int)x["id"]);
+                    log.Info("Intializing entity-cache");
+                    var entityTranslator = entityUpdater.GetLookup(x => x.id);
+
                     var ActivePostID = postChunk.Select(x => x.id).ToList();
 
                     #region Update comments
-                    var commentUpdater = new UpdateOrInsertBuilder<Comment>(
+                    if (scrapeComments)
+                    {
+                        var commentUpdater = new UpdateOrInsertBuilder<Comment>(
                                         AlreadyExists: db.Comments.Where(x => ActivePostID.Contains(x.post_id)),
                                         GetKey: x => x.fb_id + "_" + x.post_id,
                                         Updater: (dbItem, memItem) =>
@@ -308,54 +328,58 @@ namespace Scraper
                                         }
                                     );
 
-                    foreach (var comment in postComments)
-                    {
-                        commentUpdater.Process(comment.id + "_" + comment.post_id, () => new Comment()
-                            {
-                                fb_id = comment.id,
-                                message = comment.message,
-                                post_id = postTranslator[comment.post_id],
-                                entity_id = entityTranslator[comment.user_id],
-                                date = comment.date,
-                                score = Common.Classifier.Classify(comment.message)
-                            });
+                        foreach (var comment in postComments)
+                        {
+                            commentUpdater.Process(comment.id + "_" + comment.post_id, () => new Comment()
+                                {
+                                    fb_id = comment.id,
+                                    message = comment.message,
+                                    post_id = postTranslator[comment.post_id],
+                                    entity_id = entityTranslator[comment.user_id],
+                                    date = comment.date,
+                                    score = Common.Classifier.Classify(comment.message)
+                                });
+                        }
+                        commentUpdater.SyncDatabase(2000, "dbo.[Comments]", "id", x => new
+                                {
+                                    id = (int?)null,
+                                    fb_id = x.fb_id,
+                                    post_id = x.post_id,
+                                    entity_id = x.entity_id,
+                                    date = x.date,
+                                    score = x.score,
+                                    scored = 1,
+                                    message = x.message,
+                                    splitted = 0,
+                                });
                     }
-                    commentUpdater.SyncDatabase(2000, "dbo.[Comments]", "id", x => new
-                            {
-                                id = (int?)null,
-                                fb_id = x.fb_id,
-                                post_id = x.post_id,
-                                entity_id = x.entity_id,
-                                date = x.date,
-                                score = x.score,
-                                scored = 1,
-                                message = x.message,
-                                splitted = 0,
-                            });
                     #endregion
 
                     #region Update likes
-                    log.Info("Creating PostLike-UpdateOrInsertBuilder");
-                    var likeUpdater = new UpdateOrInsertBuilder<PostLike>(
-                                        AlreadyExists: db.PostLikes.Where(x => ActivePostID.Contains(x.post_id)),
-                                        GetKey: x => x.post_id + "_" + x.entity_id,
-                                        Updater: (dbItem, memItem) => false);
-
-                    log.Info("Processing PostLikes");
-                    foreach (var like in postLikes)
+                    if (scrapeLikes)
                     {
-                        likeUpdater.Process(postTranslator[like.post_id] + "_" + entityTranslator[like.user_id], () => new PostLike()
+                        log.Info("Creating PostLike-UpdateOrInsertBuilder");
+                        var likeUpdater = new UpdateOrInsertBuilder<PostLike>(
+                                            AlreadyExists: db.PostLikes.Where(x => ActivePostID.Contains(x.post_id)),
+                                            GetKey: x => x.post_id + "_" + x.entity_id,
+                                            Updater: (dbItem, memItem) => false);
+
+                        log.Info("Processing PostLikes");
+                        foreach (var like in postLikes)
                         {
-                            post_id = postTranslator[like.post_id],
-                            entity_id = entityTranslator[like.user_id],
+                            likeUpdater.Process(postTranslator[like.post_id] + "_" + entityTranslator[like.user_id], () => new PostLike()
+                            {
+                                post_id = postTranslator[like.post_id],
+                                entity_id = entityTranslator[like.user_id],
+                            });
+                        }
+                        likeUpdater.SyncDatabase(10000, "dbo.[PostLikes]", "id", x => new
+                        {
+                            id = (int?)null,
+                            post_id = x.post_id,
+                            entity_id = x.entity_id,
                         });
                     }
-                    likeUpdater.SyncDatabase(10000, "dbo.[PostLikes]", "id", x => new
-                    {
-                        id = (int?)null,
-                        post_id = x.post_id,
-                        entity_id = x.entity_id,
-                    });
                     #endregion
 
                     log.Info("Marking scraped");

@@ -8,7 +8,7 @@
     <div class="postFeed">
         <div class="feeditem" ng-repeat="post in posts">
             <div class="poster">{{post.post_name}}</div>
-            <div class="time"><span>Posted at</span> {{post.post_date | date:'HH:mm'}}. Last comment at {{post.last_comment | date:'HH:mm'}}.</div>
+            <div class="time"><span>Skrevet kl.</span> {{post.post_date | date:'HH:mm'}}. Sidste kommentar kl. {{post.last_comment | date:'HH:mm'}}.</div>
             <div class="likes"><span>Likes:</span> {{post.likes}}</div>
             <div class="comments"><span>Comments:</span> {{post.comments}}</div>
             <div class="post">{{post.message}}</div>

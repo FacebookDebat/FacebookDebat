@@ -1,5 +1,5 @@
 ﻿appRoot.controller('CommentFeedController', function ($scope, $timeout, $resource) {
-    var InitialFeedResource = $resource('/api/feed/comments?lookback=' + (10 * 60));
+    var InitialFeedResource = $resource('/api/feed/comments');
     $scope.feed = [];
     InitialFeedResource.query(function (data) {
         angular.forEach(data, function (item) {

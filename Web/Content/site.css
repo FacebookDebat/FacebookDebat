@@ -79,9 +79,9 @@ div.commentfeed {
 }
 
 .postFeed .time {
-    width: 200px;
     float: left;
     clear: left;
+    margin-right: 10px;
     font-size: 0.7em;
 }
 

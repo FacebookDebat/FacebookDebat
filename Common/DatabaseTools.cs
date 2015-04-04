@@ -250,7 +250,8 @@ namespace Common
         {
             return Do(query, parms, () =>
             {
-                var dict = new Dictionary<T, Y>();
+                var l = new List<Tuple<T, Y>>();
+
                 using (SqlConnection conn = new SqlConnection(ConfigurationManager.ConnectionStrings["FacebookDebat"].ConnectionString))
                 {
                     conn.Open();
@@ -263,14 +264,14 @@ namespace Common
                     {
                         while (reader.Read())
                         {
-                            dict.Add(getKey(reader), getValue(reader));
+                            l.Add(Tuple.Create(getKey(reader), getValue(reader)));
                         }
                         reader.Close();
 
                     }
                 }
 
-                return dict;
+                return l.ToDictionary(x => x.Item1, x => x.Item2);
             });
         }
         class SqlEception: Exception 
