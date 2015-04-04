@@ -126,8 +126,16 @@ namespace Common
                     var command = conn.CreateCommand();
                     command.CommandTimeout = 0;
                     command.CommandText = s;
-                    command.Parameters.AddRange(parms);
-                    var reader = command.ExecuteNonQuery();
+                    try
+                    {
+                        command.Parameters.AddRange(parms);
+                        var reader = command.ExecuteNonQuery();
+                    }
+                    catch (Exception e)
+                    {
+                        command.Parameters.Clear();
+                        throw;
+                    }
                 }
                 return 1;
             });
@@ -274,11 +282,12 @@ namespace Common
                 return l.ToDictionary(x => x.Item1, x => x.Item2);
             });
         }
-        class SqlEception: Exception 
+        class SqlEception : Exception
         {
             public readonly string query;
             public readonly SqlParameter[] parms;
-            public SqlEception(string query, SqlParameter[] parms, Exception innerexception) : base("SQL Problems", innerexception)
+            public SqlEception(string query, SqlParameter[] parms, Exception innerexception)
+                : base("SQL Problems", innerexception)
             {
                 this.query = query;
                 this.parms = parms;
